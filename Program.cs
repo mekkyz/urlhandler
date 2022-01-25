@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 using System;
 using System.Diagnostics;
 
@@ -26,7 +26,6 @@ static int main()
     using (Process myProcess = new Process())
     {
         myProcess.StartInfo.UseShellExecute = true;
-        // You can start any process, HelloWorld is a do-nothing example.
         myProcess.StartInfo.FileName = "/bin/leafpad";
         myProcess.StartInfo.Arguments = fileName;
         myProcess.StartInfo.CreateNoWindow = true;
