@@ -1,5 +1,3 @@
-
-----
 # Chemotion URI schema
 
 Chemotion URI schema is meant to bridge the gap between browser and desktop applications. A common use case would be accessing and editing files stored in the ELN with desktop-installed applications.
