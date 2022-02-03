@@ -10,7 +10,6 @@ static int main()
         Console.Error.WriteLine("Argument needed.");
         return 1;
     }
-    string arg = Environment.GetCommandLineArgs()[1];
 
     string url = string.Join(" ", args[1..]);
 
