@@ -87,7 +87,6 @@ class Program
 
     static async Task<string> DownloadFile(string fileId, string authToken)
     {
-        // endpoint to be created
         string downloadUrl = $"https://mekky.com/download?fileId={fileId}&auth={authToken}";
         try
         {
@@ -114,13 +113,21 @@ class Program
     {
         lastWriteTimeBeforeProcessing = File.GetLastWriteTime(filePath);
 
-        Process process = new Process();
-        process.StartInfo = new ProcessStartInfo(filePath)
+        try
         {
-            UseShellExecute = true
-        };
-        process.Start();
-        process.WaitForExit();
+            Process process = new Process();
+            process.StartInfo = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                FileName = filePath
+            };
+            process.Start();
+            process.WaitForExit();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error processing file: {ex.Message}");
+        }
     }
 
     static bool FileHasBeenModified(string filePath)
