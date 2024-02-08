@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>File Operations</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html,
@@ -15,25 +15,19 @@
             font-family: Barlow Semibold;
             font-size: 14px;
         }
-
-        body {}
     </style>
 </head>
 
-<body class="flex justify-center items-center  bg-stone-100">
+<body class="flex justify-center items-center bg-stone-100">
     <div class="bg-white shadow-xl w-128 py-32 px-16">
-        <div class="text-lg text-center pb-4">The following Buttons will direktly open a<br>Chemotion-related app with
-            some
-            predefined
-            input.</div>
-        <div class="grid grid-cols-3 grid-rows-1">
-            <a class="uppercase tracking-wider block w-48 text-uppercase shadow-lg rounded-lg text-center m-5 p-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
-                href="chemotion://something">something</a>
-            <a class="uppercase tracking-wider block w-48 text-uppercase shadow-lg rounded-lg text-center m-5 p-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
-                href="chemotion://something.else">something
-                else</a>
-            <a class="uppercase tracking-wider block w-48 text-uppercase shadow-lg rounded-lg text-center m-5 p-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
-                href="chemotion://something/even/more/here">Even more here</a>
+        <div class="text-lg text-center pb-4">Use the following buttons to perform file operations:<br>Download and automatically open files with their default applications.</div>
+        <div class="grid grid-cols-3 grid-rows-1 gap-4">
+            <a class="uppercase tracking-wider block w-full text-uppercase shadow-lg rounded-lg text-center py-5 px-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
+                href="mekkyEndpoint/download?fileId=someFileId&auth=someAuthToken" target="_blank">Download PDF</a>
+            <a class="uppercase tracking-wider block w-full text-uppercase shadow-lg rounded-lg text-center py-5 px-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
+                href="mekkyEndpoint/download?fileId=anotherFileId&auth=anotherAuthToken" target="_blank">Download Image</a>
+            <a class="uppercase tracking-wider block w-full text-uppercase shadow-lg rounded-lg text-center py-5 px-5 border-2 border-blue-500 hover:bg-blue-500 hover:text-white"
+                href="mekkyEndpoint/download?fileId=differentFileId&auth=differentAuthToken" target="_blank">Download Document</a>
         </div>
     </div>
 </body>
