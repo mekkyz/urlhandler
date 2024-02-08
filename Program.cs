@@ -1,56 +1,148 @@
-// See https://aka.ms/new-console-template for more information
+﻿// See https://aka.ms/new-console-template for more information
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web;
 
-static int main()
+class Program
 {
-    string[] args = Environment.GetCommandLineArgs();
-    if (args.Length < 2)
+    static HttpClient httpClient = new HttpClient();
+
+    static int Main(string[] args)
     {
-        Console.Error.WriteLine("Argument needed.");
-        return 1;
-    }
+        Console.ForegroundColor = ConsoleColor.White;
 
-    string url = string.Join(" ", args[1..]);
+        if (args.Length < 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("URL argument needed.");
+            Console.ResetColor();
+            return 1;
+        }
 
-    Console.ForegroundColor = ConsoleColor.White;
-    Console.WriteLine($"This is what I got: {url}\n");
+        string uri = args[1];
+        if (!Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("Invalid URL format.");
+            Console.ResetColor();
+            return 1;
+        }
 
-    string[] lines = args[1..];
-    string fileName = "/tmp/lines.txt";
+        Console.WriteLine($"This is what I got: {uri}\n");
+        var parsedUri = new Uri(uri);
+        var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
+        string fileId = queryParams["fileId"];
+        string authToken = queryParams["auth"];
 
-    File.WriteAllLines(fileName, lines);
-    DateTime lmod = File.GetLastWriteTime(fileName);
+        if (string.IsNullOrEmpty(fileId) || string.IsNullOrEmpty(authToken))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("FileId and Auth token are required.");
+            Console.ResetColor();
+            return 1;
+        }
 
-    using (Process myProcess = new Process())
-    {
-        myProcess.StartInfo.UseShellExecute = true;
-        myProcess.StartInfo.FileName = "/bin/leafpad";
-        myProcess.StartInfo.Arguments = fileName;
-        myProcess.StartInfo.CreateNoWindow = true;
-        myProcess.Start();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("Waiting for process to exit ...");
-        myProcess.WaitForExit();
-        Console.WriteLine("\n");
-    }
+        string filePath = DownloadFile(fileId, authToken).GetAwaiter().GetResult();
+        if (filePath == null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("Failed to download file.");
+            Console.ResetColor();
+            return 1;
+        }
 
-    if (File.GetLastWriteTime(fileName) > lmod)
-    {
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("File Changed....");
+        ProcessFile(filePath);
+
+        if (FileHasBeenModified(filePath))
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("File has been modified, uploading...");
+            bool uploadSuccess = UploadFile(filePath, authToken).GetAwaiter().GetResult();
+            if (uploadSuccess)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("File uploaded successfully.");
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Error.WriteLine("Failed to upload file.");
+                Console.ResetColor();
+                return 1;
+            }
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("No changes detected in the file.");
+        }
+
         Console.ResetColor();
-        Console.WriteLine("I could upload the file now or do anything else.");
-    }
-    else
-    {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("File didn't change!");
-        Console.ResetColor();
-        Console.WriteLine("Nothing to do. I could just delete it.");
+        return 0;
     }
 
-    return 0;
+
+    static async Task<string> DownloadFile(string fileId, string authToken)
+    {
+        // endpoint to be created
+        string downloadUrl = $"https://mekky.com/download?fileId={fileId}&auth={authToken}";
+        try
+        {
+            var response = await httpClient.GetAsync(downloadUrl);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            string fileContent = await response.Content.ReadAsStringAsync();
+            string filePath = Path.Combine(Path.GetTempPath(), fileId);
+            File.WriteAllText(filePath, fileContent);
+            return filePath;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    static DateTime lastWriteTimeBeforeProcessing;
+
+    static void ProcessFile(string filePath)
+    {
+        lastWriteTimeBeforeProcessing = File.GetLastWriteTime(filePath);
+
+        Process process = new Process();
+        process.StartInfo = new ProcessStartInfo(filePath)
+        {
+            UseShellExecute = true
+        };
+        process.Start();
+        process.WaitForExit();
+    }
+
+    static bool FileHasBeenModified(string filePath)
+    {
+        DateTime lastWriteTimeAfterProcessing = File.GetLastWriteTime(filePath);
+        return lastWriteTimeBeforeProcessing != lastWriteTimeAfterProcessing;
+    }
+
+
+    static async Task<bool> UploadFile(string filePath, string authToken)
+    {
+        // endpoint to be created
+        string uploadUrl = $"https://mekky.com/upload?auth={authToken}";
+        try
+        {
+            var fileContent = new StringContent(File.ReadAllText(filePath));
+            var response = await httpClient.PostAsync(uploadUrl, fileContent);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
-
-main();
