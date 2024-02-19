@@ -23,7 +23,7 @@ class Program
         }
 
         string uri = args[1];
-        if (!Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out Uri? parsedUri))
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.Error.WriteLine("Invalid URL format.");
@@ -32,10 +32,9 @@ class Program
         }
 
         Console.WriteLine($"This is what I got: {uri}\n");
-        var parsedUri = new Uri(uri);
         var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
-        string fileId = queryParams["fileId"];
-        string authToken = queryParams["auth"];
+        string? fileId = queryParams["fileId"];
+        string? authToken = queryParams["auth"];
 
         if (string.IsNullOrEmpty(fileId) || string.IsNullOrEmpty(authToken))
         {
@@ -45,7 +44,7 @@ class Program
             return 1;
         }
 
-        string filePath = DownloadFile(fileId, authToken).GetAwaiter().GetResult();
+        string? filePath = DownloadFile(fileId, authToken).GetAwaiter().GetResult();
         if (filePath == null)
         {
             Console.ForegroundColor = ConsoleColor.Red;
@@ -85,8 +84,11 @@ class Program
     }
 
 
-    static async Task<string> DownloadFile(string fileId, string authToken)
+    static async Task<string?> DownloadFile(string? fileId, string? authToken)
     {
+        if (fileId == null || authToken == null)
+            return null;
+
         string downloadUrl = $"https://mekky.com/download?fileId={fileId}&auth={authToken}";
         try
         {
@@ -109,8 +111,11 @@ class Program
 
     static DateTime lastWriteTimeBeforeProcessing;
 
-    static void ProcessFile(string filePath)
+    static void ProcessFile(string? filePath)
     {
+        if (filePath == null)
+            return;
+
         lastWriteTimeBeforeProcessing = File.GetLastWriteTime(filePath);
 
         try
@@ -130,15 +135,21 @@ class Program
         }
     }
 
-    static bool FileHasBeenModified(string filePath)
+    static bool FileHasBeenModified(string? filePath)
     {
+        if (filePath == null)
+            return false;
+
         DateTime lastWriteTimeAfterProcessing = File.GetLastWriteTime(filePath);
         return lastWriteTimeBeforeProcessing != lastWriteTimeAfterProcessing;
     }
 
 
-    static async Task<bool> UploadFile(string filePath, string authToken)
+    static async Task<bool> UploadFile(string? filePath, string? authToken)
     {
+        if (filePath == null || authToken == null)
+            return false;
+
         // endpoint to be created
         string uploadUrl = $"https://mekky.com/upload?auth={authToken}";
         try
