@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Chemotion Scheme Handler
-Exec=/home/mostafa/Work/ChemotionURIHandler/bin/Debug/net8.0/urlhandler %u
-StartupNotify=false
-MimeType=x-scheme-handler/chemotion;

@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="urlhandler.MainWindow"
+        Title="URL Handler"
+        Width="800"
+        Height="600"
+		Icon="icon.ico">
+	<Grid>
+		<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+			<TextBox x:Name="UriBox" Width="200" Margin="0,0,0,10" />
+			<Button Content="Process" Click="OnProcessButtonClick" />
+			<TextBlock x:Name="StatusBox" Margin="0,10,0,0" />
+		</StackPanel>
+	</Grid>
+</Window>
