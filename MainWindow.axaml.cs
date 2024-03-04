@@ -259,7 +259,7 @@ namespace urlhandler {
             _notifyIcon = new TrayIcon {
                 Icon = new("icon.ico"),
                 IsVisible = true,
-                ToolTipText = "Url Handler from Mostafa",
+                ToolTipText = "urlhandler",
                 Menu = _trayMenu
             };
 
