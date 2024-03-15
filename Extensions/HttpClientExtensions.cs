@@ -4,13 +4,16 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-public static class HttpClientExtensions {
+public static class HttpClientExtensions
+{
     private const int BufferSize = 8192;
 
-    public static async Task<(HttpResponseMessage Response, byte[] Content)> GetWithProgressAsync(this HttpClient client, string requestUri, IProgress<ProgressInfo> progress, CancellationToken cancellationToken = default) {
+    public static async Task<(HttpResponseMessage Response, byte[] Content)> GetWithProgressAsync(this HttpClient client, string requestUri, IProgress<ProgressInfo> progress, CancellationToken cancellationToken = default)
+    {
         using var responseMessage = await client.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-        if (!responseMessage.IsSuccessStatusCode) {
+        if (!responseMessage.IsSuccessStatusCode)
+        {
             return (responseMessage, Array.Empty<byte>());
         }
 
@@ -18,8 +21,10 @@ public static class HttpClientExtensions {
         return (responseMessage, content);
     }
 
-    public static async Task<HttpResponseMessage> PostWithProgressAsync(this HttpClient client, string requestUri, HttpContent content, IProgress<ProgressInfo> progress, CancellationToken cancellationToken = default) {
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) {
+    public static async Task<HttpResponseMessage> PostWithProgressAsync(this HttpClient client, string requestUri, HttpContent content, IProgress<ProgressInfo> progress, CancellationToken cancellationToken = default)
+    {
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
             Content = content
         };
 
@@ -28,7 +33,8 @@ public static class HttpClientExtensions {
         return responseMessage;
     }
 
-    private static async Task<byte[]> ProcessResponseAsync(HttpResponseMessage responseMessage, IProgress<ProgressInfo> progress, CancellationToken cancellationToken) {
+    private static async Task<byte[]> ProcessResponseAsync(HttpResponseMessage responseMessage, IProgress<ProgressInfo> progress, CancellationToken cancellationToken)
+    {
         using var contentStream = await responseMessage.Content.ReadAsStreamAsync();
         var totalBytesExpected = responseMessage.Content.Headers.ContentLength ?? -1;
         var totalBytesRead = 0L;
@@ -37,12 +43,14 @@ public static class HttpClientExtensions {
         var bytesRead = 0;
         var contentBytes = new MemoryStream();
 
-        do {
+        do
+        {
             bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             totalBytesRead += bytesRead;
             contentBytes.Write(buffer, 0, bytesRead);
 
-            if (totalBytesRead - totalReportedRead > BufferSize) {
+            if (totalBytesRead - totalReportedRead > BufferSize)
+            {
                 var _percentage = totalBytesExpected > 0 ? (double)totalBytesRead / totalBytesExpected * 100 : -1;
                 progress.Report(new ProgressInfo(totalBytesRead, totalBytesExpected, _percentage));
                 totalReportedRead = totalBytesRead;
