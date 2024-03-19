@@ -86,11 +86,14 @@ app.post(
   }
 );
 
-// renew endpoint
-app.post("/renew", (req, res) => {
-  renewAuthToken();
-  res.json({ authtoken: authTokens[authTokens.length - 1] });
-});
+app.get("/get_token", (req, res) => {
+  return res.status(200).json(authTokens[authTokens.length - 1]);
+}),
+  // renew endpoint
+  app.post("/renew", (req, res) => {
+    renewAuthToken();
+    res.json({ authtoken: authTokens[authTokens.length - 1] });
+  });
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
