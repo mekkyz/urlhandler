@@ -19,9 +19,8 @@
 			<TextBlock Text="URL Handler" FontWeight="DemiBold" FontFamily="Arial" VerticalAlignment="Center" />
 		</StackPanel>
 		<StackPanel Margin="20,40,20,10" Spacing="20">
-			<Image Source="avares://Urlhandler/icon.ico"
-				   Height="72"
-				   Width="72" />
+			<Image Source="avares://Urlhandler/logo.png"
+				   Height="92" />
 			<StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Spacing="5">
 				<TextBlock Text="Enter URL" FontWeight="Medium" FontSize="18" />
 				<Grid ColumnDefinitions="*,auto">
