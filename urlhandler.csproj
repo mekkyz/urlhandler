@@ -12,12 +12,9 @@
     <LangVersion>default</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <AvaloniaResource Include="icon.ico">
+    <AvaloniaResource Include="icon.ico;logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AvaloniaResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.0.6" />
@@ -34,13 +31,5 @@
     <PackageReference Include="MessageBox.Avalonia" Version="3.1.5.1" />
     <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.1.1" />
     <PackageReference Include="RestSharp" Version="110.2.1-alpha.0.16" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="icon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <UpToDateCheckInput Remove="UserControls\UrlHandler.axaml" />
   </ItemGroup>
 </Project>
