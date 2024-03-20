@@ -8,7 +8,6 @@ namespace urlhandler
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainWindowViewModel(this);
         }
     }
 }
