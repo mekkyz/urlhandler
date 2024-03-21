@@ -4,7 +4,7 @@
         x:Class="urlhandler.MainWindow"
         Title="URL Handler"
         Width="470"
-        SizeToContent="Height"
+        Height="575"
         x:DataType="viewmodels:MainWindowViewModel"
         Icon="icon.ico"
         xmlns:i="https://github.com/projektanker/icons.avalonia"
