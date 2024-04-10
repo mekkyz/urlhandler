@@ -141,13 +141,13 @@ namespace urlhandler.ViewModels
                 await FetchAuthToken();
                 if (args.Length > 0)
                 {
-                    string pattern = @"^localhost://\d+/(\w+\.\w+)/(\d+)$";
+                    string pattern = @"^chemotion://\d+/(\w+\.\w+)/(\d+)$";
                     Regex regex = new Regex(pattern);
                     Match match = regex.Match(args.First());
 
                     if (!match.Success)
                     {
-                        Status = "Invalid URL format. Expected format: localhost://3000/csii.png/12345";
+                        Status = "Invalid URL format. Expected format: chemotion://3000/csii.png/12345";
                         await ShowNotificationAsync(Status);
                         return;
                     }
@@ -166,10 +166,8 @@ namespace urlhandler.ViewModels
                     }
 
                     AddHistory(downloadUrl);
-                    //IsAlreadyProcessing = true;
                     ProcessFile(_filePath);
                 }
-
             });
 
 
@@ -457,8 +455,6 @@ namespace urlhandler.ViewModels
             return String.Format("{0:##.##} TB", decimal.Divide(bytes, (long)Math.Pow(scale, orders.Length)));
         }
 
-
-        [RelayCommand]
         public async Task<bool> UploadFiles(bool ignoreIndex = false)
         {
             bool allUploadsSuccessful = true;
@@ -527,75 +523,28 @@ namespace urlhandler.ViewModels
                         allUploadsSuccessful = false;
                     }
                 }
+            }
+            return allUploadsSuccessful;
+        }
 
-                if (SelectedDownloadedFileIndex == null || DownloadedFiles.Count > 1)
+        [RelayCommand]
+        public async Task<bool> UploadFiles()
+        {
+            bool allUploadsSuccessful = true;
+
+            // get list of previously uploaded files
+            List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
+            if (DownloadedFiles.Count < 1)
+            {
+                return false;
+            }
+
+            if (SelectedDownloadedFileIndex == null || DownloadedFiles.Count > 1)
+            {
+                // upload all files that have been modified
+                for (int i = DownloadedFiles.Count - 1; i >= 0; i--)
                 {
-                    // upload all files that have been modified
-                    for (int i = DownloadedFiles.Count - 1; i >= 0; i--)
-                    {
-                        string filePath = DownloadedFiles[i].FilePath;
-
-                        if (filePath == null || AuthToken == null)
-                            return false;
-
-                        string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
-
-                        try
-                        {
-                            // check if the file has been modified since the last upload
-                            DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-                            Downloads previouslyUploadedFile =
-                                previouslyUploadedFiles.Find(f => f.FilePath == filePath);
-                            if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
-                            {
-                                Status =
-                                    $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
-                                await ShowNotificationAsync(Status);
-                                continue;
-                            }
-
-                            byte[] fileContentBytes =
-                                await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
-                            var content = new MultipartFormDataContent();
-                            content.Add(
-                                new ByteArrayContent(fileContentBytes),
-                                name: "file",
-                                new FileInfo(DownloadedFiles[i].FilePath).Name
-                            );
-                            var progress = new Progress<ProgressInfo>(progress =>
-                            {
-                                FileUpDownProgressText =
-                                    $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-                                Status = FileUpDownProgressText;
-                                FileUpDownProgress = progress.Percentage;
-                            });
-                            var response = await _httpClient.PostWithProgressAsync(
-                                uploadUrl,
-                                content,
-                                progress
-                            );
-                            Status = response.IsSuccessStatusCode
-
-                                ? $"File uploaded successfully."
-                                : $"Failed to upload File.";
-                            await ShowNotificationAsync(Status);
-                            DownloadedFiles.RemoveAt(i);
-                            return true;
-
-                        }
-                        catch (Exception ex)
-                        {
-                            Status = $"Error uploading File {i + 1}: {ex.Message}";
-                            await ShowNotificationAsync(Status);
-                            allUploadsSuccessful = false;
-                        }
-                    }
-                }
-                else
-                {
-                    // upload selected file if modified
-                    int selectedIndex = SelectedDownloadedFileIndex;
-                    string filePath = DownloadedFiles[selectedIndex].FilePath;
+                    string filePath = DownloadedFiles[i].FilePath;
 
                     if (filePath == null || AuthToken == null)
                         return false;
@@ -604,53 +553,176 @@ namespace urlhandler.ViewModels
 
                     try
                     {
+                        // check if the file has been modified since the last upload
+                        DateTime lastWriteTime = File.GetLastWriteTime(filePath);
+                        Downloads previouslyUploadedFile =
+                            previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                        if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
+                        {
+                            Status =
+                                $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
+                            await ShowNotificationAsync(Status);
+                            continue;
+                        }
+
+                        byte[] fileContentBytes =
+                            await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
+                        var content = new MultipartFormDataContent();
+                        content.Add(
+                            new ByteArrayContent(fileContentBytes),
+                            name: "file",
+                            new FileInfo(DownloadedFiles[i].FilePath).Name
+                        );
+                        var progress = new Progress<ProgressInfo>(progress =>
+                        {
+                            FileUpDownProgressText =
+                                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
+                            Status = FileUpDownProgressText;
+                            FileUpDownProgress = progress.Percentage;
+                        });
+                        var response = await _httpClient.PostWithProgressAsync(
+                            uploadUrl,
+                            content,
+                            progress
+                        );
+                        Status = response.IsSuccessStatusCode
+
+                            ? $"File uploaded successfully."
+                            : $"Failed to upload File.";
+                        await ShowNotificationAsync(Status);
+                        DownloadedFiles.RemoveAt(i);
+                        return true;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Status = $"Error uploading File {i + 1}: {ex.Message}";
+                        await ShowNotificationAsync(Status);
+                        allUploadsSuccessful = false;
+                    }
+                }
+            }
+            if (DownloadedFiles.Count > 0)
+            {
+                // upload all files that have been modified
+                for (int i = DownloadedFiles.Count - 1; i >= 0; i--)
+                {
+                    string filePath = DownloadedFiles[i].FilePath;
+
+                    if (filePath == null || AuthToken == null)
+                        return false;
+
+                    string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
+
+                    try
+                    {
+                        // check if file modified
                         DateTime lastWriteTime = File.GetLastWriteTime(filePath);
                         Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath);
                         if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
                         {
                             Status =
-                                $"File ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
+                                $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
                             await ShowNotificationAsync(Status);
+                            continue;
                         }
-                        else
-                        {
-                            byte[] fileContentBytes =
-                                await File.ReadAllBytesAsync(DownloadedFiles[SelectedDownloadedFileIndex].FilePath);
-                            var content = new MultipartFormDataContent();
-                            content.Add(
-                                new ByteArrayContent(fileContentBytes),
-                                name: "file",
-                                new FileInfo(DownloadedFiles[SelectedDownloadedFileIndex].FilePath).Name
-                            );
-                            var progress = new Progress<ProgressInfo>(progress =>
-                            {
-                                FileUpDownProgressText =
-                                    $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-                                Status = FileUpDownProgressText;
-                                FileUpDownProgress = progress.Percentage;
-                            });
-                            var response = await _httpClient.PostWithProgressAsync(
-                                uploadUrl,
-                                content,
-                                progress
-                            );
-                            Status = response.IsSuccessStatusCode
 
-                                ? $"File uploaded successfully."
-                                : $"Failed to upload File.";
-                            await ShowNotificationAsync(Status);
-                            DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
-                            return true;
-                        }
+                        byte[] fileContentBytes =
+                            await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
+                        var content = new MultipartFormDataContent();
+                        content.Add(
+                            new ByteArrayContent(fileContentBytes),
+                            name: "file",
+                            new FileInfo(DownloadedFiles[i].FilePath).Name
+                        );
+                        var progress = new Progress<ProgressInfo>(progress =>
+                        {
+                            FileUpDownProgressText =
+                                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
+                            Status = FileUpDownProgressText;
+                            FileUpDownProgress = progress.Percentage;
+                        });
+                        var response = await _httpClient.PostWithProgressAsync(
+                            uploadUrl,
+                            content,
+                            progress
+                        );
+                        Status = response.IsSuccessStatusCode
+
+                            ? $"File uploaded successfully."
+                            : $"Failed to upload File.";
+                        await ShowNotificationAsync(Status);
+                        DownloadedFiles.RemoveAt(i);
+                        return true;
+
                     }
                     catch (Exception ex)
                     {
-                        Status = $"Error uploading File: {ex.Message}";
+                        Status = $"Error uploading File {i + 1}: {ex.Message}";
                         await ShowNotificationAsync(Status);
                         allUploadsSuccessful = false;
                     }
                 }
+            }
 
+            else
+            {
+                // upload selected file if modified
+                int selectedIndex = SelectedDownloadedFileIndex;
+                string filePath = DownloadedFiles[selectedIndex].FilePath;
+
+                if (filePath == null || AuthToken == null)
+                    return false;
+
+                string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
+
+                try
+                {
+                    DateTime lastWriteTime = File.GetLastWriteTime(filePath);
+                    Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                    if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
+                    {
+                        Status =
+                            $"File ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
+                        await ShowNotificationAsync(Status);
+                    }
+                    else
+                    {
+                        byte[] fileContentBytes =
+                            await File.ReadAllBytesAsync(DownloadedFiles[SelectedDownloadedFileIndex].FilePath);
+                        var content = new MultipartFormDataContent();
+                        content.Add(
+                            new ByteArrayContent(fileContentBytes),
+                            name: "file",
+                            new FileInfo(DownloadedFiles[SelectedDownloadedFileIndex].FilePath).Name
+                        );
+                        var progress = new Progress<ProgressInfo>(progress =>
+                        {
+                            FileUpDownProgressText =
+                                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
+                            Status = FileUpDownProgressText;
+                            FileUpDownProgress = progress.Percentage;
+                        });
+                        var response = await _httpClient.PostWithProgressAsync(
+                            uploadUrl,
+                            content,
+                            progress
+                        );
+                        Status = response.IsSuccessStatusCode
+
+                            ? $"File uploaded successfully."
+                            : $"Failed to upload File.";
+                        await ShowNotificationAsync(Status);
+                        DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Status = $"Error uploading File: {ex.Message}";
+                    await ShowNotificationAsync(Status);
+                    allUploadsSuccessful = false;
+                }
                 return allUploadsSuccessful;
             }
             if (DownloadedFiles.Count > 0)
