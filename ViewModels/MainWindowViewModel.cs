@@ -28,18 +28,14 @@ namespace urlhandler.ViewModels
 
         private TrayIcon? _notifyIcon;
         private HttpClient _httpClient = new HttpClient();
-
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(HasFilesDownloaded))]
         private ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
         [ObservableProperty] private int _selectedDownloadedFileIndex = -1;
         [ObservableProperty] private bool _hasFilesDownloaded = !false;
-
-
         //private System.Timers.Timer? _timer;
-        private bool _isFileChanged;
         private string? _filePath;
-        [ObservableProperty] private int _authToken;
+        [ObservableProperty] private int? _authToken;
         private string? _fileId;
         private INotificationManager? notificationManager;
         private Avalonia.Threading.DispatcherTimer? idleTimer;
@@ -52,38 +48,27 @@ namespace urlhandler.ViewModels
         #region ObservableProperties
 
         [ObservableProperty] private double _fileUpDownProgress = 0.0f;
-
         [ObservableProperty] private string _fileUpDownProgressText = "";
-
         [ObservableProperty] private string _url = "";
-
         [ObservableProperty] private string _status = "";
-
         [ObservableProperty] private ObservableCollection<string> _history = new ObservableCollection<string>();
-
-
         [ObservableProperty] private bool _hasHistory = !false;
-
         [ObservableProperty] private int _selectedHistoryIndex = -1;
-
         [ObservableProperty] private object? _selectedUrl;
         private MainWindow mainWindow;
-
         [ObservableProperty] private bool _isAlreadyProcessing = false;
-
         [ObservableProperty] private bool _isManualEnabled = false;
-
         string[] args = ["", ""];
         public MainWindowViewModel(MainWindow mainWindow, string[] _args)
         {
             this.mainWindow = mainWindow;
-            args = _args;
-            #region Window Specific Events
+            args = _args ?? throw new ArgumentNullException(nameof(_args));
+            #region WindowSpecificEvents
 
             mainWindow.Loaded += MainWindow_Loaded;
             mainWindow.Deactivated += MainWindow_Deactivated;
 
-            #endregion Window Specific Events
+            #endregion WindowSpecificEvents
 
             // load History from .txt file if exists
             var historyFilePath = AppDomain.CurrentDomain.BaseDirectory + "history.txt";
@@ -257,17 +242,23 @@ namespace urlhandler.ViewModels
 
                     var queryParams = HttpUtility.ParseQueryString(parsedUri.Query);
                     _fileId = queryParams["fileId"];
-                    var _authToken = int.Parse(queryParams["authtoken"]);
+                    var authTokenString = queryParams["authtoken"];
                     if (string.IsNullOrEmpty(_fileId))
                     {
                         Status = "FileId is required.";
-                        await ShowNotificationAsync(Status); //
+                        await ShowNotificationAsync(Status);
+                        return;
+                    }
+                    if (string.IsNullOrEmpty(authTokenString) || !int.TryParse(authTokenString, out var _authToken))
+                    {
+                        Status = "Auth token is invalid or missing.";
+                        await ShowNotificationAsync(Status);
                         return;
                     }
 
                     AddHistory(Url);
                     _filePath = await DownloadFile(_fileId, _authToken);
-                    if (AuthToken <= 0)
+                    if (_authToken <= 0)
                     {
                         await FetchAuthToken();
                         if (_filePath == null && _authToken != AuthToken)
@@ -312,10 +303,11 @@ namespace urlhandler.ViewModels
             }
             catch (HttpRequestException ex)
             {
+                string detailedError = $"Network error occurred: {ex.Message}. Please check your connection or contact support if the problem persists.";
                 await MessageBoxManager
                     .GetMessageBoxStandard(
                         "Error",
-                        "Error 400: Either no internet connection or server is not working."
+                        detailedError
                     )
                     .ShowAsync();
             }
@@ -424,8 +416,15 @@ namespace urlhandler.ViewModels
             }
             catch (Exception ex)
             {
-                Status = "System.IO.IOException: The process cannot access the file because it is being used by another process";
+                string errorMessage = $"An error occurred: {ex.Message}";
+                if (ex is IOException)
+                {
+                    errorMessage = $"File access error: {ex.Message} - The file might be in use by another process or locked.";
+                }
+
+                Status = errorMessage;
                 await ShowNotificationAsync(Status);
+
                 return null;
             }
         }
@@ -478,7 +477,7 @@ namespace urlhandler.ViewModels
                     {
                         // check if file modified since last upload
                         DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-                        Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                        Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath) ?? throw new InvalidOperationException("File not found.");
                         if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
                         {
                             Status =
@@ -531,32 +530,28 @@ namespace urlhandler.ViewModels
         public async Task<bool> UploadFiles()
         {
             bool allUploadsSuccessful = true;
-
-            // get list of previously uploaded files
-            List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
-            if (DownloadedFiles.Count < 1)
+            if (DownloadedFiles == null || DownloadedFiles.Count < 1)
             {
                 return false;
             }
 
-            if (SelectedDownloadedFileIndex == null || DownloadedFiles.Count > 1)
+            List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
+
+            if (DownloadedFiles.Count > 1)
             {
                 // upload all files that have been modified
                 for (int i = DownloadedFiles.Count - 1; i >= 0; i--)
                 {
                     string filePath = DownloadedFiles[i].FilePath;
-
                     if (filePath == null || AuthToken == null)
                         return false;
 
                     string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
-
                     try
                     {
                         // check if the file has been modified since the last upload
                         DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-                        Downloads previouslyUploadedFile =
-                            previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                        Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
                         if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
                         {
                             Status =
@@ -618,7 +613,7 @@ namespace urlhandler.ViewModels
                     {
                         // check if file modified
                         DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-                        Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                        Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
                         if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
                         {
                             Status =
@@ -627,8 +622,7 @@ namespace urlhandler.ViewModels
                             continue;
                         }
 
-                        byte[] fileContentBytes =
-                            await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
+                        byte[] fileContentBytes = await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
                         var content = new MultipartFormDataContent();
                         content.Add(
                             new ByteArrayContent(fileContentBytes),
@@ -648,7 +642,6 @@ namespace urlhandler.ViewModels
                             progress
                         );
                         Status = response.IsSuccessStatusCode
-
                             ? $"File uploaded successfully."
                             : $"Failed to upload File.";
                         await ShowNotificationAsync(Status);
@@ -679,7 +672,7 @@ namespace urlhandler.ViewModels
                 try
                 {
                     DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-                    Downloads previouslyUploadedFile = previouslyUploadedFiles.Find(f => f.FilePath == filePath);
+                    Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
                     if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime)
                     {
                         Status =
@@ -803,7 +796,7 @@ namespace urlhandler.ViewModels
                 new NativeMenuItem
                 {
                     Header = "Maximize",
-                    Command = new RelayCommand(async () =>
+                    Command = new RelayCommand(() =>
                     {
                         Dispatcher.UIThread.Invoke(() =>
                         {
@@ -819,7 +812,7 @@ namespace urlhandler.ViewModels
                     Header = "Upload all edited files",
                     Command = new RelayCommand(async () =>
                     {
-                        UploadFiles(ignoreIndex: true);
+                        await UploadFiles(ignoreIndex: true);
                     })
                 }
             );
