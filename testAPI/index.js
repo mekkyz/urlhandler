@@ -100,7 +100,7 @@ app.use((err, req, res, next) => {
   res.status(500).send("Internal server error");
 });
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 app.listen(port, () =>
   console.log(
     `Server listening on port ${port}\nInitial Authtoken: ${authTokens[0]}`
