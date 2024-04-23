@@ -85,20 +85,20 @@ namespace urlhandler.ViewModels {
     public MainWindowViewModel(MainWindow mainWindow, string[] _args) {
       this.mainWindow = mainWindow;
       args = _args ?? throw new ArgumentNullException(nameof(_args));
-      #region WindowSpecificEvents
 
+      #region WindowSpecificEvents
       mainWindow.Loaded += MainWindow_Loaded;
       mainWindow.Deactivated += MainWindow_Deactivated;
-
       #endregion WindowSpecificEvents
 
       // load History from .txt file if exists
-      var historyFilePath = AppDomain.CurrentDomain.BaseDirectory + "history.txt";
+      var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
 
       if (File.Exists(historyFilePath)) {
-        if (File.ReadAllLines(historyFilePath).Length > 0) {
-          foreach (var url in File.ReadAllLines(historyFilePath)) {
-            HasHistory = !true;
+        var lines = File.ReadAllLines(historyFilePath);
+        if (lines.Length > 0) {
+          foreach (var url in lines) {
+            HasHistory = true;
             History.Add(url);
           }
         }
@@ -108,30 +108,28 @@ namespace urlhandler.ViewModels {
     private void MainWindow_Deactivated(object? sender, EventArgs e) {
       if (isMinimizedByIdleTimer == false && mainWindow.WindowState == WindowState.Minimized) {
         mainWindow.ShowInTaskbar = false;
-        idleTimer!.IsEnabled = false;
-        idleTimer.Stop();
-        isMinimizedByIdleTimer = false;
+        if (idleTimer != null) {
+          idleTimer.IsEnabled = false;
+          idleTimer.Stop();
+        }
+        isMinimizedByIdleTimer = true;
       }
       else {
         mainWindow.ShowInTaskbar = true;
-        idleTimer!.IsEnabled = true;
-        idleTimer.Start();
+        if (idleTimer != null) {
+          idleTimer.IsEnabled = true;
+          idleTimer.Start();
+        }
         isMinimizedByIdleTimer = false;
       }
     }
 
-    private void MainWindow_Loaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e) {
-      // _timer = new System.Timers.Timer(1000);
-      // _timer.Elapsed += async (sender, e) => await CheckFileChanges();
-
+    private void MainWindow_Loaded(object? sender, EventArgs e) {
       InitializeSystemTrayIcon();
 
-      if (
-        Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10
-        || Environment.OSVersion.Platform == PlatformID.Unix
-      ) {
-        notificationManager =
-          Program.NotificationManager ?? throw new InvalidOperationException("Missing notification toast");
+      if ((Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10) ||
+          Environment.OSVersion.Platform == PlatformID.Unix) {
+        notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
       }
 
       Task.Run(async () => {
@@ -168,58 +166,98 @@ namespace urlhandler.ViewModels {
     }
 
     private async Task FetchAuthToken() {
-      var response = await _httpClient.GetAsync("http://localhost:3000/get_token");
-      if (response.IsSuccessStatusCode) {
-        var c = await response.Content.ReadAsStringAsync();
-        AuthToken = int.Parse(c);
+      try {
+        var response = await _httpClient.GetAsync("http://localhost:3000/get_token");
+        if (response.IsSuccessStatusCode) {
+          var content = await response.Content.ReadAsStringAsync();
+          if (int.TryParse(content, out int token)) {
+            AuthToken = token;
+          }
+          else {
+            // handle invalid token format
+            throw new InvalidOperationException("Failed to parse auth token from response content.");
+          }
+        }
+        else {
+          // handle unsuccessful HTTP response
+          throw new HttpRequestException($"Failed to fetch auth token. Status code: {response.StatusCode}");
+        }
+      }
+      catch (HttpRequestException ex) {
+        Console.WriteLine($"Error fetching auth token: {ex.Message}");
+        throw;
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Error fetching auth token: {ex.Message}");
+        throw;
       }
     }
-
     #endregion ObservableProperties
 
     #region RelayCommands/Events
-
     partial void OnSelectedHistoryIndexChanged(int value) {
-      if (value >= 0 && value < History.Count) {
-        Url = History[value];
+      try {
+        if (value >= 0 && value < History.Count) {
+          Url = History[value];
+        }
+        else {
+          throw new IndexOutOfRangeException("Selected history index is out of range.");
+        }
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Error in OnSelectedHistoryIndexChanged: {ex.Message}");
+        throw;
       }
     }
 
     [RelayCommand]
     public void AddHistory(string url) {
-      // load History from .txt file if exists
-      History.Add(url);
-      var historyFilePath = AppDomain.CurrentDomain.BaseDirectory + "history.txt";
-      if (File.Exists(historyFilePath)) {
-        File.AppendAllLines(historyFilePath, new List<string> { url });
-      }
-      else {
-        File.WriteAllLines(historyFilePath, new List<string> { url });
-      }
+      try {
+        // load History from .txt file if exists
+        History.Add(url);
+        var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
+        if (File.Exists(historyFilePath)) {
+          File.AppendAllLines(historyFilePath, new[] { url });
+        }
+        else {
+          File.WriteAllLines(historyFilePath, new[] { url });
+        }
 
-      HasHistory = !true;
+        HasHistory = History.Any();
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Error in AddHistory: {ex.Message}");
+        throw;
+      }
     }
 
     [RelayCommand]
     public void DeleteHistory() {
-      // load History from .txt file if exists
-      var historyFilePath = AppDomain.CurrentDomain.BaseDirectory + "history.txt";
-      if (SelectedHistoryIndex > -1) {
-        History.RemoveAt(SelectedHistoryIndex);
+      try {
+        var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
 
-        if (File.Exists(historyFilePath)) {
-          File.WriteAllLines(historyFilePath, History);
+        if (SelectedHistoryIndex > -1 && SelectedHistoryIndex < History.Count) {
+          History.RemoveAt(SelectedHistoryIndex);
         }
-      }
-      else {
-        History.Clear();
-        if (File.Exists(historyFilePath)) {
-          File.Delete(historyFilePath);
+        else {
+          History.Clear();
         }
-      }
+        if (File.Exists(historyFilePath)) {
+          if (History.Count > 0) {
+            File.WriteAllLines(historyFilePath, History);
+          }
+          else {
+            File.Delete(historyFilePath);
+          }
+        }
 
-      if (History.Count < 1)
-        HasHistory = !false;
+        HasHistory = History.Any();
+      }
+      catch (Exception ex) {
+        // Handle exceptions
+        Console.WriteLine($"Error in DeleteHistory: {ex.Message}");
+        throw;
+      }
     }
 
     [RelayCommand]
@@ -248,114 +286,108 @@ namespace urlhandler.ViewModels {
 
           AddHistory(Url);
           _filePath = await DownloadFile(_fileId, _authToken);
-          if (_authToken <= 0) {
+          if (_filePath == null) {
             await FetchAuthToken();
-            if (_filePath == null && _authToken != AuthToken) {
+            if (_authToken != AuthToken) {
               Status = "Failed to download with old token. Please use a fresh token.";
               await ShowNotificationAsync(Status);
               return;
             }
-            if (_filePath == null) {
-              Status = "Failed to download file.";
-              await ShowNotificationAsync(Status);
-              return;
-            }
-          }
-          if (_filePath == null && _authToken != AuthToken) {
-            Status = "Failed to download with old token. Please use a fresh token.";
-            await ShowNotificationAsync(Status);
-            return;
-          }
-
-          if (_filePath == null) {
             Status = "Failed to download file.";
             await ShowNotificationAsync(Status);
             return;
           }
 
-          //IsAlreadyProcessing = true;
           ProcessFile(_filePath);
         }
         else {
           await MessageBoxManager
-            .GetMessageBoxStandard(
-              "Error",
-              "Another file is already being processed. Please wait for it to complete before running another."
-            )
-            .ShowAsync();
+              .GetMessageBoxStandard(
+                  "Error",
+                  "Another file is already being processed. Please wait for it to complete before running another."
+              )
+              .ShowAsync();
         }
       }
       catch (HttpRequestException ex) {
-        string detailedError =
-          $"Network error occurred: {ex.Message}. Please check your connection or contact support if the problem persists.";
+        string detailedError = $"Network error occurred: {ex.Message}. Please check your connection or contact support if the problem persists.";
         await MessageBoxManager.GetMessageBoxStandard("Error", detailedError).ShowAsync();
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Error in Process method: {ex.Message}");
+        throw;
       }
     }
 
     #region MinimizingWindowAfterbeingIdle
-
     private void MinimizeWindowOnIdle() {
-      var window = mainWindow;
-      idleTimer = new Avalonia.Threading.DispatcherTimer();
-      idleTimer.Interval = TimeSpan.FromSeconds(300);
-      idleTimer.Tick += (sender, e) => {
-        var elapsedTime = DateTime.Now - lastInteractionTime;
-        if (elapsedTime.TotalSeconds > 300) {
-          isMinimizedByIdleTimer = true;
-          mainWindow.WindowState = WindowState.Minimized;
-          idleTimer.IsEnabled = false;
-          idleTimer.Stop();
-        }
-      };
-      idleTimer.Start();
-      window.PointerPressed += Window_PointerPressed;
-      window.PointerMoved += Window_PointerMoved;
-      window.KeyDown += Window_KeyDown;
-      lastInteractionTime = DateTime.Now;
+      try {
+        var window = mainWindow;
+        idleTimer = new Avalonia.Threading.DispatcherTimer();
+        idleTimer.Interval = TimeSpan.FromSeconds(300);
+        idleTimer.Tick += (sender, e) => {
+          var elapsedTime = DateTime.Now - lastInteractionTime;
+          if (elapsedTime.TotalSeconds > 300) {
+            isMinimizedByIdleTimer = true;
+            mainWindow.WindowState = WindowState.Minimized;
+            idleTimer.IsEnabled = false;
+            idleTimer.Stop();
+          }
+        };
+        idleTimer.Start();
+        window.PointerPressed += Window_PointerPressed;
+        window.PointerMoved += Window_PointerMoved;
+        window.KeyDown += Window_KeyDown;
+        lastInteractionTime = DateTime.Now;
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Error in MinimizeWindowOnIdle: {ex.Message}");
+        throw;
+      }
     }
 
     private void Window_KeyDown(object? sender, Avalonia.Input.KeyEventArgs e) {
       // reset interaction on key press
-      lastInteractionTime = DateTime.Now;
+      ResetLastInteractionTime();
     }
 
     private void Window_PointerMoved(object? sender, PointerEventArgs e) {
       // reset interaction on mouse move
-      lastInteractionTime = DateTime.Now;
+      ResetLastInteractionTime();
     }
 
     private void Window_PointerPressed(object? sender, PointerPressedEventArgs e) {
       // reset interaction on mouse click
-      lastInteractionTime = DateTime.Now;
+      ResetLastInteractionTime();
     }
 
     private void OnActivated(object sender, EventArgs e) {
       // reset interaction on window focus
-      lastInteractionTime = DateTime.Now;
+      ResetLastInteractionTime();
     }
 
+    private void ResetLastInteractionTime() {
+      // reset last interaction time
+      lastInteractionTime = DateTime.Now;
+    }
     #endregion MinimizingWindowAfterbeingIdle
 
     #region Uploading/Downloading
-
     private async Task<string?> DownloadFile(string? fileId, int authtoken) {
-      if (fileId == null)
-        return null;
-      if (authtoken != AuthToken) {
-        Status = "Failed to download with old token. Please use a fresh token.";
-        await ShowNotificationAsync(Status);
-        return null;
-      }
-      string downloadUrl = $"http://127.0.0.1:3000/download?fileId={fileId}&authtoken={authtoken}";
       try {
+        if (fileId == null)
+          return null;
+        if (authtoken != AuthToken) {
+          Status = "Failed to download with old token. Please use a fresh token.";
+          await ShowNotificationAsync(Status);
+          return null;
+        }
+        string downloadUrl = $"http://127.0.0.1:3000/download?fileId={fileId}&authtoken={authtoken}";
         Status = "Downloading File...";
         await ShowNotificationAsync(Status);
         var progress = new Progress<ProgressInfo>(progress => {
-          FileUpDownProgressText =
-            $"Downloaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-
+          FileUpDownProgressText = $"Downloaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
           Status = FileUpDownProgressText;
-
           FileUpDownProgress = progress.Percentage;
         });
         var (response, fileContentBytes) = await _httpClient.GetWithProgressAsync(downloadUrl, progress);
@@ -374,10 +406,9 @@ namespace urlhandler.ViewModels {
         return filePath;
       }
       catch (Exception ex) {
-        string errorMessage = $"An error occurred: {ex.Message}";
-        if (ex is IOException) {
-          errorMessage = $"File access error: {ex.Message} - The file might be in use by another process or locked.";
-        }
+        string errorMessage = ex is IOException ?
+            $"File access error: {ex.Message} - The file might be in use by another process or locked." :
+            $"An error occurred: {ex.Message}";
 
         Status = errorMessage;
         await ShowNotificationAsync(Status);
@@ -389,74 +420,63 @@ namespace urlhandler.ViewModels {
     private string FormatBytes(long bytes) {
       const int scale = 1024;
       string[] orders = new string[] { "B", "KB", "MB", "GB", "TB" };
-      long max = (long)Math.Pow(scale, orders.Length - 1);
-      for (int i = 0; i < orders.Length; i++) {
-        long scaleMax = (long)Math.Pow(scale, i + 1);
-        if (bytes < scale) {
-          return $"{bytes} {orders[0]}"; // special case for bytes
-        }
-        if (bytes < scaleMax) {
-          return String.Format("{0:##.##} {1}", decimal.Divide(bytes, scaleMax / scale), orders[i]);
-        }
+      int orderIndex = 0;
+      decimal adjustedBytes = bytes;
+      while (adjustedBytes >= scale && orderIndex < orders.Length - 1) {
+        adjustedBytes /= scale;
+        orderIndex++;
       }
-
-      return String.Format("{0:##.##} TB", decimal.Divide(bytes, (long)Math.Pow(scale, orders.Length)));
+      // format the bytes with the appropriate unit
+      return $"{adjustedBytes:##.##} {orders[orderIndex]}";
     }
 
     public async Task<bool> UploadFiles(bool ignoreIndex = false) {
       bool allUploadsSuccessful = true;
 
-      // get list of uploaded files
-      List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
+      try {
+        // get list of uploaded files
+        List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
 
-      if (DownloadedFiles.Count > 0 && ignoreIndex == true) {
-        // upload all files that were modified
-        for (int i = DownloadedFiles.Count - 1; i >= 0; i--) {
-          string filePath = DownloadedFiles[i].FilePath;
+        if (DownloadedFiles.Count > 0 && ignoreIndex) {
+          // upload all files that were modified
+          for (int i = DownloadedFiles.Count - 1; i >= 0; i--) {
+            string filePath = DownloadedFiles[i].FilePath;
 
-          if (filePath == null || AuthToken == null)
-            return false;
+            if (filePath == null || AuthToken == null)
+              return false;
 
-          string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
+            string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
 
-          try {
             // check if file modified since last upload
             DateTime lastWriteTime = File.GetLastWriteTime(filePath);
             Downloads previouslyUploadedFile =
               previouslyUploadedFiles.Find(f => f.FilePath == filePath)
               ?? throw new InvalidOperationException("File not found.");
             if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
-              Status =
-                $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
+              Status = $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
               await ShowNotificationAsync(Status);
               continue;
             }
 
-            byte[] fileContentBytes = await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
+            byte[] fileContentBytes = await File.ReadAllBytesAsync(filePath);
             var content = new MultipartFormDataContent();
-            content.Add(
-              new ByteArrayContent(fileContentBytes),
-              name: "file",
-              new FileInfo(DownloadedFiles[i].FilePath).Name
-            );
+            content.Add(new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath));
             var progress = new Progress<ProgressInfo>(progress => {
-              FileUpDownProgressText =
-                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
+              FileUpDownProgressText = $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
               Status = FileUpDownProgressText;
               FileUpDownProgress = progress.Percentage;
             });
             var response = await _httpClient.PostWithProgressAsync(uploadUrl, content, progress);
-            Status = response.IsSuccessStatusCode ? $"File uploaded successfully." : $"Failed to upload File.";
+            Status = response.IsSuccessStatusCode ? "File uploaded successfully." : "Failed to upload file.";
             await ShowNotificationAsync(Status);
             DownloadedFiles.RemoveAt(i);
-            return true;
-          }
-          catch (Exception ex) {
-            Status = $"Error uploading File {i + 1}: {ex.Message}";
-            await ShowNotificationAsync(Status);
-            allUploadsSuccessful = false;
           }
         }
+      }
+      catch (Exception ex) {
+        Status = $"Error uploading files: {ex.Message}";
+        await ShowNotificationAsync(Status);
+        allUploadsSuccessful = false;
       }
       return allUploadsSuccessful;
     }
@@ -464,58 +484,14 @@ namespace urlhandler.ViewModels {
     [RelayCommand]
     public async Task<bool> UploadFiles() {
       bool allUploadsSuccessful = true;
-      if (DownloadedFiles == null || DownloadedFiles.Count < 1) {
-        return false;
-      }
 
-      List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
-
-      if (DownloadedFiles.Count > 1) {
-        // upload all files that have been modified
-        for (int i = DownloadedFiles.Count - 1; i >= 0; i--) {
-          string filePath = DownloadedFiles[i].FilePath;
-          if (filePath == null || AuthToken == null)
-            return false;
-
-          string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
-          try {
-            // check if the file has been modified since the last upload
-            DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-            Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
-            if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
-              Status =
-                $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
-              await ShowNotificationAsync(Status);
-              continue;
-            }
-
-            byte[] fileContentBytes = await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
-            var content = new MultipartFormDataContent();
-            content.Add(
-              new ByteArrayContent(fileContentBytes),
-              name: "file",
-              new FileInfo(DownloadedFiles[i].FilePath).Name
-            );
-            var progress = new Progress<ProgressInfo>(progress => {
-              FileUpDownProgressText =
-                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-              Status = FileUpDownProgressText;
-              FileUpDownProgress = progress.Percentage;
-            });
-            var response = await _httpClient.PostWithProgressAsync(uploadUrl, content, progress);
-            Status = response.IsSuccessStatusCode ? $"File uploaded successfully." : $"Failed to upload File.";
-            await ShowNotificationAsync(Status);
-            DownloadedFiles.RemoveAt(i);
-            return true;
-          }
-          catch (Exception ex) {
-            Status = $"Error uploading File {i + 1}: {ex.Message}";
-            await ShowNotificationAsync(Status);
-            allUploadsSuccessful = false;
-          }
+      try {
+        if (DownloadedFiles == null || DownloadedFiles.Count < 1) {
+          return false;
         }
-      }
-      if (DownloadedFiles.Count > 0) {
+
+        List<Downloads> previouslyUploadedFiles = DownloadedFiles.ToList();
+
         // upload all files that have been modified
         for (int i = DownloadedFiles.Count - 1; i >= 0; i--) {
           string filePath = DownloadedFiles[i].FilePath;
@@ -530,30 +506,23 @@ namespace urlhandler.ViewModels {
             DateTime lastWriteTime = File.GetLastWriteTime(filePath);
             Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
             if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
-              Status =
-                $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
+              Status = $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
               await ShowNotificationAsync(Status);
               continue;
             }
 
-            byte[] fileContentBytes = await File.ReadAllBytesAsync(DownloadedFiles[i].FilePath);
+            byte[] fileContentBytes = await File.ReadAllBytesAsync(filePath);
             var content = new MultipartFormDataContent();
-            content.Add(
-              new ByteArrayContent(fileContentBytes),
-              name: "file",
-              new FileInfo(DownloadedFiles[i].FilePath).Name
-            );
+            content.Add(new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath));
             var progress = new Progress<ProgressInfo>(progress => {
-              FileUpDownProgressText =
-                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
+              FileUpDownProgressText = $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
               Status = FileUpDownProgressText;
               FileUpDownProgress = progress.Percentage;
             });
             var response = await _httpClient.PostWithProgressAsync(uploadUrl, content, progress);
-            Status = response.IsSuccessStatusCode ? $"File uploaded successfully." : $"Failed to upload File.";
+            Status = response.IsSuccessStatusCode ? "File uploaded successfully." : "Failed to upload file.";
             await ShowNotificationAsync(Status);
             DownloadedFiles.RemoveAt(i);
-            return true;
           }
           catch (Exception ex) {
             Status = $"Error uploading File {i + 1}: {ex.Message}";
@@ -561,63 +530,20 @@ namespace urlhandler.ViewModels {
             allUploadsSuccessful = false;
           }
         }
-      }
-      else {
-        // upload selected file if modified
-        int selectedIndex = SelectedDownloadedFileIndex;
-        string filePath = DownloadedFiles[selectedIndex].FilePath;
-
-        if (filePath == null || AuthToken == null)
-          return false;
-
-        string uploadUrl = $"http://127.0.0.1:3000/upload?authtoken={AuthToken}";
-
-        try {
-          DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-          Downloads? previouslyUploadedFile = previouslyUploadedFiles?.Find(f => f.FilePath == filePath);
-          if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
-            Status = $"File ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
-            await ShowNotificationAsync(Status);
-          }
-          else {
-            byte[] fileContentBytes = await File.ReadAllBytesAsync(
-              DownloadedFiles[SelectedDownloadedFileIndex].FilePath
-            );
-            var content = new MultipartFormDataContent();
-            content.Add(
-              new ByteArrayContent(fileContentBytes),
-              name: "file",
-              new FileInfo(DownloadedFiles[SelectedDownloadedFileIndex].FilePath).Name
-            );
-            var progress = new Progress<ProgressInfo>(progress => {
-              FileUpDownProgressText =
-                $"Uploaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-              Status = FileUpDownProgressText;
-              FileUpDownProgress = progress.Percentage;
-            });
-            var response = await _httpClient.PostWithProgressAsync(uploadUrl, content, progress);
-            Status = response.IsSuccessStatusCode ? $"File uploaded successfully." : $"Failed to upload File.";
-            await ShowNotificationAsync(Status);
-            DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
-            return true;
-          }
+        if (DownloadedFiles.Count < 1) {
+          HasFilesDownloaded = false;
         }
-        catch (Exception ex) {
-          Status = $"Error uploading File: {ex.Message}";
-          await ShowNotificationAsync(Status);
-          allUploadsSuccessful = false;
+        else {
+          HasFilesDownloaded = true;
         }
-        return allUploadsSuccessful;
       }
-      if (DownloadedFiles.Count > 0) {
-        HasFilesDownloaded = !true;
+      catch (Exception ex) {
+        Status = $"Error uploading files: {ex.Message}";
+        await ShowNotificationAsync(Status);
+        allUploadsSuccessful = false;
       }
-      else {
-        HasFilesDownloaded = !false;
-      }
-      return false;
+      return allUploadsSuccessful;
     }
-
     #endregion Uploading/Downloading
 
     #region File Processing
@@ -626,41 +552,25 @@ namespace urlhandler.ViewModels {
     private void ProcessFile(string? filePath) {
       try {
         if (filePath != null) {
-          _fileProcess = new Process { StartInfo = new ProcessStartInfo(filePath) { UseShellExecute = true } };
-          // _fileProcess.EnableRaisingEvents = true;
-          // _fileProcess.Exited += (sender, args) =>
-          // {
-          //     IsAlreadyProcessing = false;
-          // };
-          _fileProcess.Start();
-          //_timer.Start();
-          DownloadedFiles.Add(
-            new Downloads() {
-              FileName = new FileInfo(filePath).Name,
-              FilePath = filePath,
-              FileTime = File.GetLastWriteTime(filePath)
+          _fileProcess?.Dispose();
+
+          _fileProcess = new Process {
+            StartInfo = new ProcessStartInfo(filePath) {
+              UseShellExecute = true
             }
-          );
-          if (DownloadedFiles.Count > 0) {
-            HasFilesDownloaded = !true;
-          }
-          else {
-            HasFilesDownloaded = !false;
-          }
+          };
+          _fileProcess.Start();
+
+          DownloadedFiles.Add(new Downloads() {
+            FileName = Path.GetFileName(filePath),
+            FilePath = filePath,
+            FileTime = File.GetLastWriteTime(filePath)
+          });
+          HasFilesDownloaded = DownloadedFiles.Count > 0;
         }
       }
       catch (Exception ex) {
-        Console.WriteLine(ex);
-        return;
-      }
-    }
-
-    partial void OnIsManualEnabledChanged(bool value) {
-      if (value == false) {
-        IsAlreadyProcessing = false;
-      }
-      else {
-        IsAlreadyProcessing = true;
+        Console.WriteLine($"Error processing file: {ex.Message}");
       }
     }
 
@@ -669,34 +579,34 @@ namespace urlhandler.ViewModels {
     private void InitializeSystemTrayIcon() {
       var _trayMenu = new NativeMenu();
       _trayMenu.Add(
-        new NativeMenuItem {
-          Header = "Maximize",
-          Command = new RelayCommand(() => {
-            Dispatcher.UIThread.Invoke(() => {
-              mainWindow.WindowState = WindowState.Maximized;
-              mainWindow.ShowInTaskbar = true;
-            });
-          })
-        }
+          new NativeMenuItem {
+            Header = "Maximize",
+            Command = new RelayCommand(() => {
+              Dispatcher.UIThread.Invoke(() => {
+                mainWindow.WindowState = WindowState.Maximized;
+                mainWindow.ShowInTaskbar = true;
+              });
+            })
+          }
       );
       _trayMenu.Add(
-        new NativeMenuItem {
-          Header = "Upload all edited files",
-          Command = new RelayCommand(async () => {
-            await UploadFiles(ignoreIndex: true);
-          })
-        }
+          new NativeMenuItem {
+            Header = "Upload all edited files",
+            Command = new RelayCommand(async () => {
+              await UploadFiles(ignoreIndex: true);
+            })
+          }
       );
 
       _trayMenu.Add(
-        new NativeMenuItem {
-          Header = "Exit",
-          Command = new RelayCommand(() => {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
-              desktopApp.Shutdown();
-            }
-          })
-        }
+          new NativeMenuItem {
+            Header = "Exit",
+            Command = new RelayCommand(() => {
+              if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
+                desktopApp.Shutdown();
+              }
+            })
+          }
       );
 
       _notifyIcon = new TrayIcon {
@@ -711,28 +621,29 @@ namespace urlhandler.ViewModels {
 
     private async Task ShowNotificationAsync(string body, string title = "Status") {
       try {
-        if (
-          Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10
-          || Environment.OSVersion.Platform == PlatformID.Unix
-        ) {
-          nf = new Notification {
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10
+            || Environment.OSVersion.Platform == PlatformID.Unix) {
+          Notification nf = new Notification {
             Title = title,
             Body = body,
-            BodyImagePath = AppDomain.CurrentDomain.BaseDirectory + "icon.ico"
+            BodyImagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico")
           };
           await notificationManager!.ShowNotification(nf);
         }
       }
       catch (Exception ex) {
-        Debug.WriteLine(ex);
+        Debug.WriteLine($"Error showing notification: {ex.Message}");
       }
     }
 
     private void ShowMainWindow() {
       if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
-        desktopApp.MainWindow!.Show();
-        desktopApp.MainWindow!.WindowState = WindowState.Normal;
-        desktopApp.MainWindow!.ShowInTaskbar = true;
+        var mainWindow = desktopApp.MainWindow;
+        if (mainWindow != null) {
+          mainWindow.Show();
+          mainWindow.WindowState = WindowState.Normal;
+          mainWindow.ShowInTaskbar = true;
+        }
       }
     }
     #endregion RelayCommands/Events
