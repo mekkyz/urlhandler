@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Urlhandler.ViewModels
-{
-    public class ViewModelBase : ObservableObject { }
+namespace Urlhandler.ViewModels {
+  public class ViewModelBase : ObservableObject { }
 }

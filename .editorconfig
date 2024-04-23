@@ -1,0 +1,15 @@
+root = true
+
+[*.{cs,cshtml,aspx,ascx,js,json,html,css,scss,md,yaml,yml}]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+max_line_length = 120
+space_around_operators = true
+
+[*.cs]
+csharp_new_line_before_open_brace = none
+csharp_indent_case_contents = true
+csharp_language_version = latest
