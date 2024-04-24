@@ -325,13 +325,14 @@ namespace urlhandler.ViewModels {
         var window = mainWindow;
         idleTimer = new Avalonia.Threading.DispatcherTimer();
         idleTimer.Interval = TimeSpan.FromSeconds(300);
-        idleTimer.Tick += (sender, e) => {
+        idleTimer.Tick += async (sender, e) => {
           var elapsedTime = DateTime.Now - lastInteractionTime;
           if (elapsedTime.TotalSeconds > 300) {
             isMinimizedByIdleTimer = true;
             mainWindow.WindowState = WindowState.Minimized;
             idleTimer.IsEnabled = false;
             idleTimer.Stop();
+            await ShowNotificationAsync("The window has been minimized due to inactivity. Move the mouse or press any key to restore.", "Auto-minimize");
           }
         };
         idleTimer.Start();
@@ -369,7 +370,16 @@ namespace urlhandler.ViewModels {
     private void ResetLastInteractionTime() {
       // reset last interaction time
       lastInteractionTime = DateTime.Now;
+      if (isMinimizedByIdleTimer) {
+        mainWindow.WindowState = WindowState.Normal;
+        mainWindow.ShowInTaskbar = true;
+        isMinimizedByIdleTimer = false;
+        idleTimer.IsEnabled = true;
+        idleTimer.Start();
+        ShowNotificationAsync("The window has been restored after being idle. You can continue your work.", "Window Restored").Wait();
+      }
     }
+
     #endregion MinimizingWindowAfterbeingIdle
 
     #region Uploading/Downloading
@@ -621,11 +631,21 @@ namespace urlhandler.ViewModels {
 
     private async Task ShowNotificationAsync(string body, string title = "Status") {
       try {
+        string detailedBody = body;
         if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10
             || Environment.OSVersion.Platform == PlatformID.Unix) {
+          if (body.StartsWith("Failed to download")) {
+            detailedBody += " Please check your network connection and ensure the file ID and authentication token are correct.";
+          }
+          else if (body.StartsWith("Invalid URL format")) {
+            detailedBody += " Ensure the URL matches the expected pattern.";
+          }
+          else if (body.StartsWith("File access error")) {
+            detailedBody += " Make sure the file is not being used by another application and you have sufficient permissions.";
+          }
           Notification nf = new Notification {
             Title = title,
-            Body = body,
+            Body = detailedBody,
             BodyImagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico")
           };
           await notificationManager!.ShowNotification(nf);
