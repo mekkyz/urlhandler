@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -374,8 +375,13 @@ namespace urlhandler.ViewModels {
         mainWindow.WindowState = WindowState.Normal;
         mainWindow.ShowInTaskbar = true;
         isMinimizedByIdleTimer = false;
-        idleTimer.IsEnabled = true;
-        idleTimer.Start();
+        if (idleTimer != null) {
+          idleTimer.IsEnabled = true;
+          idleTimer.Start();
+        }
+        else {
+          Console.WriteLine("Error: idleTimer is null.");
+        }
         ShowNotificationAsync("The window has been restored after being idle. You can continue your work.", "Window Restored").Wait();
       }
     }
@@ -383,10 +389,21 @@ namespace urlhandler.ViewModels {
     #endregion MinimizingWindowAfterbeingIdle
 
     #region Uploading/Downloading
+    public async Task DownloadFilesConcurrently(IEnumerable<string> fileIds, int authtoken) {
+      var downloadTasks = fileIds.Select(fileId => DownloadFile(fileId, authtoken));
+      var files = await Task.WhenAll(downloadTasks);
+      foreach (var file in files.Where(f => f != null)) {
+        ProcessFile(file);
+      }
+    }
+
     private async Task<string?> DownloadFile(string? fileId, int authtoken) {
       try {
-        if (fileId == null)
+        if (fileId == null) {
+          Status = "FileId is required.";
+          await ShowNotificationAsync(Status);
           return null;
+        }
         if (authtoken != AuthToken) {
           Status = "Failed to download with old token. Please use a fresh token.";
           await ShowNotificationAsync(Status);
@@ -395,24 +412,29 @@ namespace urlhandler.ViewModels {
         string downloadUrl = $"http://127.0.0.1:3000/download?fileId={fileId}&authtoken={authtoken}";
         Status = "Downloading File...";
         await ShowNotificationAsync(Status);
-        var progress = new Progress<ProgressInfo>(progress => {
-          FileUpDownProgressText = $"Downloaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)}.";
-          Status = FileUpDownProgressText;
-          FileUpDownProgress = progress.Percentage;
+        var progress = new Progress<ProgressInfo>(progressInfo => {
+          Dispatcher.UIThread.Invoke(() => {
+            FileUpDownProgressText = $"Downloaded {FormatBytes(progressInfo.BytesRead)} out of {FormatBytes(progressInfo.TotalBytesExpected ?? 0)}.";
+            FileUpDownProgress = progressInfo.Percentage;
+            Status = FileUpDownProgressText;
+          });
         });
         var (response, fileContentBytes) = await _httpClient.GetWithProgressAsync(downloadUrl, progress);
-        Status = response.IsSuccessStatusCode ? "File downloaded successfully." : "Failed to download file.";
-        await ShowNotificationAsync(Status);
         if (!response.IsSuccessStatusCode) {
+          Status = "Failed to download file.";
+          await ShowNotificationAsync(Status);
           return null;
         }
 
-        await FetchAuthToken();
         string filePath = Path.Combine(Path.GetTempPath(), fileId);
-        using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write)) {
-          await fileStream.WriteAsync(fileContentBytes, 0, fileContentBytes.Length);
+        using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true)) {
+          await fileStream.WriteAsync(fileContentBytes.AsMemory(0, fileContentBytes.Length));
         }
 
+        await FetchAuthToken();
+
+        Status = "File downloaded successfully.";
+        await ShowNotificationAsync(Status);
         return filePath;
       }
       catch (Exception ex) {
@@ -425,6 +447,24 @@ namespace urlhandler.ViewModels {
 
         return null;
       }
+    }
+
+    private System.Threading.Timer? _debounceTimer;
+    private void DebounceUpdate(Action updateAction, int interval = 300) {
+      _debounceTimer?.Dispose();
+      _debounceTimer = new System.Threading.Timer(_ => {
+        updateAction();
+        _debounceTimer = null;
+      }, null, interval, Timeout.Infinite);
+    }
+
+    private void UpdateProgress(ProgressInfo progress, string fileId) {
+      DebounceUpdate(() => {
+        Dispatcher.UIThread.Invoke(() => {
+          FileUpDownProgressText = $"Downloaded {FormatBytes(progress.BytesRead)} out of {FormatBytes(progress.TotalBytesExpected ?? 0)} for file {fileId}.";
+          FileUpDownProgress = progress.Percentage;
+        });
+      }, 300);
     }
 
     private string FormatBytes(long bytes) {
@@ -583,7 +623,6 @@ namespace urlhandler.ViewModels {
         Console.WriteLine($"Error processing file: {ex.Message}");
       }
     }
-
     #endregion File Processing
 
     private void InitializeSystemTrayIcon() {
