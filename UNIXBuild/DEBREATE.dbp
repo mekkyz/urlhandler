@@ -1,0 +1,143 @@
+[DEBREATE-0.8-dev9]
+<<CTRL>>
+Package: urlhandler
+Version: 0.3
+Maintainer: mekkyz <mos.mekky@gmail.com>
+Section: utils
+Homepage: https://www.scc.kit.edu/
+Architecture: amd64
+Priority: optional
+Pre-Depends: dotnet8 (>=8.0.4)
+Description: Chemotion URL Handler
+ URL Handler is a cross-platform application designed to manage and process URLs specifically tailored for Chemotion interfaces.
+<</CTRL>>
+<<FILES>>
+1
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Base.dll -> Avalonia.Base.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Controls.dll -> Avalonia.Controls.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.DesignerSupport.dll -> Avalonia.DesignerSupport.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Desktop.dll -> Avalonia.Desktop.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Dialogs.dll -> Avalonia.Dialogs.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Fonts.Inter.dll -> Avalonia.Fonts.Inter.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.FreeDesktop.dll -> Avalonia.FreeDesktop.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Markup.Xaml.dll -> Avalonia.Markup.Xaml.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Markup.dll -> Avalonia.Markup.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Metal.dll -> Avalonia.Metal.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.MicroCom.dll -> Avalonia.MicroCom.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Native.dll -> Avalonia.Native.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.OpenGL.dll -> Avalonia.OpenGL.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Remote.Protocol.dll -> Avalonia.Remote.Protocol.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Skia.dll -> Avalonia.Skia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Themes.Fluent.dll -> Avalonia.Themes.Fluent.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.Win32.dll -> Avalonia.Win32.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.X11.dll -> Avalonia.X11.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Avalonia.dll -> Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/ColorTextBlock.Avalonia.dll -> ColorTextBlock.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/CommunityToolkit.Mvvm.dll -> CommunityToolkit.Mvvm.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/DesktopNotifications.Avalonia.dll -> DesktopNotifications.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/DesktopNotifications.FreeDesktop.dll -> DesktopNotifications.FreeDesktop.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/DesktopNotifications.Windows.dll -> DesktopNotifications.Windows.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/DesktopNotifications.dll -> DesktopNotifications.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/DialogHost.Avalonia.dll -> DialogHost.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/HarfBuzzSharp.dll -> HarfBuzzSharp.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Markdown.Avalonia.dll -> Markdown.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/MicroCom.Runtime.dll -> MicroCom.Runtime.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Microsoft.Toolkit.Uwp.Notifications.dll -> Microsoft.Toolkit.Uwp.Notifications.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Microsoft.Win32.SystemEvents.dll -> Microsoft.Win32.SystemEvents.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/MsBox.Avalonia.dll -> MsBox.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Projektanker.Icons.Avalonia.FontAwesome.dll -> Projektanker.Icons.Avalonia.FontAwesome.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Projektanker.Icons.Avalonia.dll -> Projektanker.Icons.Avalonia.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/RestSharp.dll -> RestSharp.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/SkiaSharp.dll -> SkiaSharp.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/System.Drawing.Common.dll -> System.Drawing.Common.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/System.IO.Pipelines.dll -> System.IO.Pipelines.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/System.Reactive.dll -> System.Reactive.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Tmds.DBus.Protocol.dll -> Tmds.DBus.Protocol.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/Tmds.DBus.dll -> Tmds.DBus.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/icon.ico -> icon.ico -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/libHarfBuzzSharp.so -> libHarfBuzzSharp.so -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/libSkiaSharp.so -> libSkiaSharp.so -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/logo.png -> logo.png -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/urlhandler* -> urlhandler -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/urlhandler.deps.json -> urlhandler.deps.json -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/urlhandler.dll -> urlhandler.dll -> /usr/lib
+/home/mostafa/Desktop/uh/urlhandler/urlhandler.runtimeconfig.json -> urlhandler.runtimeconfig.json -> /usr/lib
+<</FILES>>
+<<SCRIPTS>>
+<<PREINST>>
+1
+
+<</PREINST>>
+<<POSTINST>>
+1
+#!/bin/bash -e
+
+ln -fs "/usr/lib/urlhandler" "/usr/bin/urlhandler"
+
+PROTOCOL="chemotion"
+HANDLER_PATH="/usr/lib/urlhandler"
+DESKTOP_FILE="/usr/share/applications/${PROTOCOL}-handler.desktop"
+
+sudo bash -c "cat << EOF > '$DESKTOP_FILE'
+[Desktop Entry]
+Type=Application
+Name=${PROTOCOL} Handler
+Exec=$HANDLER_PATH %u
+MimeType=x-scheme-handler/${PROTOCOL}
+NoDisplay=true
+EOF"
+
+sudo update-desktop-database "/usr/share/applications"
+
+echo "Protocol '${PROTOCOL}' has been associated with '${HANDLER_PATH}' system-wide."
+<</POSTINST>>
+<<PRERM>>
+1
+#!/bin/bash -e
+
+rm -f "/usr/bin/urlhandler"
+<</PRERM>>
+<<POSTRM>>
+0
+<</POSTRM>>
+<</SCRIPTS>>
+<<CHANGELOG>>
+<<DEST>>DEFAULT<</DEST>>
+
+<</CHANGELOG>>
+<<COPYRIGHT>>
+MIT License
+
+Copyright (c) 2024 KIT Scientific Computing Center (SCC)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+<</COPYRIGHT>>
+<<MENU>>
+1
+Name=URL Handler
+Version=1.0
+Exec=/usr/lib/urlhandler
+Icon=/usr/lib/icon.ico
+Type=Application
+Terminal=true
+StartupNotify=true
+Encoding=UTF-8
+Categories=Application;
+<</MENU>>
