@@ -23,65 +23,36 @@ using Urlhandler.ViewModels;
 
 namespace urlhandler.ViewModels {
   public partial class MainWindowViewModel : ViewModelBase {
-    #region Properties
+    #region Fields
     private TrayIcon? _notifyIcon;
     private HttpClient _httpClient = new HttpClient();
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasFilesDownloaded))]
-    private ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
-
-    [ObservableProperty]
-    private int _selectedDownloadedFileIndex = -1;
-
-    [ObservableProperty]
-    private bool _hasFilesDownloaded = !false;
-
-    //private System.Timers.Timer? _timer;
     private string? _filePath;
-
-    [ObservableProperty]
-    private int? _authToken;
     private string? _fileId;
     private INotificationManager? notificationManager;
     private Avalonia.Threading.DispatcherTimer? idleTimer;
     private DateTime lastInteractionTime;
     private bool isMinimizedByIdleTimer = false;
     private Notification nf = new Notification();
-    #endregion Properties
-
-    #region ObservableProperties
-    [ObservableProperty]
-    private double _fileUpDownProgress = 0.0f;
-
-    [ObservableProperty]
-    private string _fileUpDownProgressText = "";
-
-    [ObservableProperty]
-    private string _url = "";
-
-    [ObservableProperty]
-    private string _status = "";
-
-    [ObservableProperty]
-    private ObservableCollection<string> _history = new ObservableCollection<string>();
-
-    [ObservableProperty]
-    private bool _hasHistory = !false;
-
-    [ObservableProperty]
-    private int _selectedHistoryIndex = -1;
-
-    [ObservableProperty]
-    private object? _selectedUrl;
     private MainWindow mainWindow;
+    private string[] args = ["", ""];
+    #endregion Fields
 
-    [ObservableProperty]
-    private bool _isAlreadyProcessing = false;
-
-    [ObservableProperty]
-    private bool _isManualEnabled = false;
-    string[] args = ["", ""];
+    #region Properties
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] private ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
+    [ObservableProperty] private int _selectedDownloadedFileIndex = -1;
+    [ObservableProperty] private bool _hasFilesDownloaded = !false;
+    [ObservableProperty] private double _fileUpDownProgress = 0.0f;
+    [ObservableProperty] private string _fileUpDownProgressText = "";
+    [ObservableProperty] private string _url = "";
+    [ObservableProperty] private string _status = "";
+    [ObservableProperty] private ObservableCollection<string> _history = new ObservableCollection<string>();
+    [ObservableProperty] private bool _hasHistory = !false;
+    [ObservableProperty] private int _selectedHistoryIndex = -1;
+    [ObservableProperty] private object? _selectedUrl;
+    [ObservableProperty] private bool _isAlreadyProcessing = false;
+    [ObservableProperty] private bool _isManualEnabled = false;
+    [ObservableProperty] private int? _authToken;
+    #endregion Properties
 
     public MainWindowViewModel(MainWindow mainWindow, string[] _args) {
       this.mainWindow = mainWindow;
@@ -193,7 +164,6 @@ namespace urlhandler.ViewModels {
         throw;
       }
     }
-    #endregion ObservableProperties
 
     #region RelayCommands/Events
     partial void OnSelectedHistoryIndexChanged(int value) {
