@@ -49,16 +49,21 @@ namespace urlhandler.ViewModels {
     [ObservableProperty] private bool _isManualEnabled = false;
     [ObservableProperty] private int? _authToken;
 
-    public MainWindowViewModel(MainWindow mainWindow, string[] _args) {
+    public MainWindowViewModel(MainWindow mainWindow, string[] args) {
       this.mainWindow = mainWindow;
-      args = _args ?? throw new ArgumentNullException(nameof(_args));
+      this.args = args ?? throw new ArgumentNullException(nameof(args));
 
+      SetupEventHandlers();
+      LoadHistory();
+    }
+
+    private void SetupEventHandlers() {
       mainWindow.Loaded += MainWindow_Loaded;
       mainWindow.Deactivated += MainWindow_Deactivated;
+    }
 
-      // load History from .txt file if exists
+    private void LoadHistory() {
       var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
-
       if (File.Exists(historyFilePath)) {
         var lines = File.ReadAllLines(historyFilePath);
         if (lines.Length > 0) {
@@ -70,93 +75,93 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    private void MainWindow_Deactivated(object? sender, EventArgs e) {
-      if (isMinimizedByIdleTimer == false && mainWindow.WindowState == WindowState.Minimized) {
-        mainWindow.ShowInTaskbar = false;
-        if (idleTimer != null) {
-          idleTimer.IsEnabled = false;
-          idleTimer.Stop();
-        }
-        isMinimizedByIdleTimer = true;
-      }
-      else {
-        mainWindow.ShowInTaskbar = true;
-        if (idleTimer != null) {
-          idleTimer.IsEnabled = true;
-          idleTimer.Start();
-        }
-        isMinimizedByIdleTimer = false;
-      }
-    }
-
-    private void MainWindow_Loaded(object? sender, EventArgs e) {
-      InitializeSystemTrayIcon();
-
-      if ((Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10) ||
-          Environment.OSVersion.Platform == PlatformID.Unix) {
-        notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
-      }
-
-      Task.Run(async () => {
-        await FetchAuthToken();
-        if (args.Length > 0) {
-          string pattern = @"^chemotion://\d+/(\w+\.\w+)/(\d+)$";
-          Regex regex = new Regex(pattern);
-          Match match = regex.Match(args.First());
-
-          if (!match.Success) {
-            Status = "Invalid URL format. Expected format: chemotion://3000/csii.png/12345";
-            await ShowNotificationAsync(Status);
-            return;
+      private void MainWindow_Deactivated(object? sender, EventArgs e) {
+        if (isMinimizedByIdleTimer == false && mainWindow.WindowState == WindowState.Minimized) {
+          mainWindow.ShowInTaskbar = false;
+          if (idleTimer != null) {
+            idleTimer.IsEnabled = false;
+            idleTimer.Stop();
           }
-
-          string fileName = match.Groups[1].Value;
-          string authToken = match.Groups[2].Value;
-
-          string downloadUrl = $"http://localhost:3000/download?fileId={fileName}&authtoken={authToken}";
-
-          _filePath = await DownloadFile(fileName, int.Parse(authToken));
-          if (_filePath == null) {
-            Status = "Failed to download file.";
-            await ShowNotificationAsync(Status);
-            return;
-          }
-
-          AddHistory(downloadUrl);
-          ProcessFile(_filePath);
-        }
-      });
-
-      MinimizeWindowOnIdle();
-    }
-
-    private async Task FetchAuthToken() {
-      try {
-        var response = await _httpClient.GetAsync("http://localhost:3000/get_token");
-        if (response.IsSuccessStatusCode) {
-          var content = await response.Content.ReadAsStringAsync();
-          if (int.TryParse(content, out int token)) {
-            AuthToken = token;
-          }
-          else {
-            // handle invalid token format
-            throw new InvalidOperationException("Failed to parse auth token from response content.");
-          }
+          isMinimizedByIdleTimer = true;
         }
         else {
-          // handle unsuccessful HTTP response
-          throw new HttpRequestException($"Failed to fetch auth token. Status code: {response.StatusCode}");
+          mainWindow.ShowInTaskbar = true;
+          if (idleTimer != null) {
+            idleTimer.IsEnabled = true;
+            idleTimer.Start();
+          }
+          isMinimizedByIdleTimer = false;
         }
       }
-      catch (HttpRequestException ex) {
-        Console.WriteLine($"Error fetching auth token: {ex.Message}");
-        throw;
+
+      private void MainWindow_Loaded(object? sender, EventArgs e) {
+        InitializeSystemTrayIcon();
+
+        if ((Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10) ||
+            Environment.OSVersion.Platform == PlatformID.Unix) {
+          notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
+        }
+
+        Task.Run(async () => {
+          await FetchAuthToken();
+          if (args.Length > 0) {
+            string pattern = @"^chemotion://\d+/(\w+\.\w+)/(\d+)$";
+            Regex regex = new Regex(pattern);
+            Match match = regex.Match(args.First());
+
+            if (!match.Success) {
+              Status = "Invalid URL format. Expected format: chemotion://3000/csii.png/12345";
+              await ShowNotificationAsync(Status);
+              return;
+            }
+
+            string fileName = match.Groups[1].Value;
+            string authToken = match.Groups[2].Value;
+
+            string downloadUrl = $"http://localhost:3000/download?fileId={fileName}&authtoken={authToken}";
+
+            _filePath = await DownloadFile(fileName, int.Parse(authToken));
+            if (_filePath == null) {
+              Status = "Failed to download file.";
+              await ShowNotificationAsync(Status);
+              return;
+            }
+
+            AddHistory(downloadUrl);
+            ProcessFile(_filePath);
+          }
+        });
+
+        MinimizeWindowOnIdle();
       }
-      catch (Exception ex) {
-        Console.WriteLine($"Error fetching auth token: {ex.Message}");
-        throw;
+
+      private async Task FetchAuthToken() {
+        try {
+          var response = await _httpClient.GetAsync("http://localhost:3000/get_token");
+          if (response.IsSuccessStatusCode) {
+            var content = await response.Content.ReadAsStringAsync();
+            if (int.TryParse(content, out int token)) {
+              AuthToken = token;
+            }
+            else {
+              // handle invalid token format
+              throw new InvalidOperationException("Failed to parse auth token from response content.");
+            }
+          }
+          else {
+            // handle unsuccessful HTTP response
+            throw new HttpRequestException($"Failed to fetch auth token. Status code: {response.StatusCode}");
+          }
+        }
+        catch (HttpRequestException ex) {
+          Console.WriteLine($"Error fetching auth token: {ex.Message}");
+          throw;
+        }
+        catch (Exception ex) {
+          Console.WriteLine($"Error fetching auth token: {ex.Message}");
+          throw;
+        }
       }
-    }
 
     partial void OnSelectedHistoryIndexChanged(int value) {
       try {
