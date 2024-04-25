@@ -23,21 +23,17 @@ using Urlhandler.ViewModels;
 
 namespace urlhandler.ViewModels {
   public partial class MainWindowViewModel : ViewModelBase {
-    #region Fields
     private TrayIcon? _notifyIcon;
     private HttpClient _httpClient = new HttpClient();
     private string? _filePath;
     private string? _fileId;
     private INotificationManager? notificationManager;
-    private Avalonia.Threading.DispatcherTimer? idleTimer;
+    private DispatcherTimer? idleTimer;
     private DateTime lastInteractionTime;
     private bool isMinimizedByIdleTimer = false;
-    private Notification nf = new Notification();
     private MainWindow mainWindow;
     private string[] args = ["", ""];
-    #endregion Fields
 
-    #region Properties
     [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] private ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
     [ObservableProperty] private int _selectedDownloadedFileIndex = -1;
     [ObservableProperty] private bool _hasFilesDownloaded = !false;
@@ -52,16 +48,13 @@ namespace urlhandler.ViewModels {
     [ObservableProperty] private bool _isAlreadyProcessing = false;
     [ObservableProperty] private bool _isManualEnabled = false;
     [ObservableProperty] private int? _authToken;
-    #endregion Properties
 
     public MainWindowViewModel(MainWindow mainWindow, string[] _args) {
       this.mainWindow = mainWindow;
       args = _args ?? throw new ArgumentNullException(nameof(_args));
 
-      #region WindowSpecificEvents
       mainWindow.Loaded += MainWindow_Loaded;
       mainWindow.Deactivated += MainWindow_Deactivated;
-      #endregion WindowSpecificEvents
 
       // load History from .txt file if exists
       var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
@@ -165,7 +158,6 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    #region RelayCommands/Events
     partial void OnSelectedHistoryIndexChanged(int value) {
       try {
         if (value >= 0 && value < History.Count) {
@@ -290,11 +282,10 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    #region MinimizingWindowAfterbeingIdle
     private void MinimizeWindowOnIdle() {
       try {
         var window = mainWindow;
-        idleTimer = new Avalonia.Threading.DispatcherTimer();
+        idleTimer = new DispatcherTimer();
         idleTimer.Interval = TimeSpan.FromSeconds(300);
         idleTimer.Tick += async (sender, e) => {
           var elapsedTime = DateTime.Now - lastInteractionTime;
@@ -318,7 +309,7 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    private void Window_KeyDown(object? sender, Avalonia.Input.KeyEventArgs e) {
+    private void Window_KeyDown(object? sender, KeyEventArgs e) {
       // reset interaction on key press
       ResetLastInteractionTime();
     }
@@ -356,9 +347,7 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    #endregion MinimizingWindowAfterbeingIdle
 
-    #region Uploading/Downloading
     public async Task DownloadFilesConcurrently(IEnumerable<string> fileIds, int authtoken) {
       var downloadTasks = fileIds.Select(fileId => DownloadFile(fileId, authtoken));
       var files = await Task.WhenAll(downloadTasks);
@@ -419,10 +408,10 @@ namespace urlhandler.ViewModels {
       }
     }
 
-    private System.Threading.Timer? _debounceTimer;
+    private Timer? _debounceTimer;
     private void DebounceUpdate(Action updateAction, int interval = 300) {
       _debounceTimer?.Dispose();
-      _debounceTimer = new System.Threading.Timer(_ => {
+      _debounceTimer = new Timer(_ => {
         updateAction();
         _debounceTimer = null;
       }, null, interval, Timeout.Infinite);
@@ -564,9 +553,7 @@ namespace urlhandler.ViewModels {
       }
       return allUploadsSuccessful;
     }
-    #endregion Uploading/Downloading
 
-    #region File Processing
     private Process? _fileProcess;
 
     private void ProcessFile(string? filePath) {
@@ -593,7 +580,6 @@ namespace urlhandler.ViewModels {
         Console.WriteLine($"Error processing file: {ex.Message}");
       }
     }
-    #endregion File Processing
 
     private void InitializeSystemTrayIcon() {
       var _trayMenu = new NativeMenu();
@@ -675,6 +661,5 @@ namespace urlhandler.ViewModels {
         }
       }
     }
-    #endregion RelayCommands/Events
   }
 }
