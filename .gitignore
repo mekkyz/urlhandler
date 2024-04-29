@@ -1,4 +1,4 @@
 bin/
 obj/
-.testAPI/node_modules/
+.api/node_modules/
 .config/
