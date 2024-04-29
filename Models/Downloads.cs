@@ -1,6 +1,6 @@
 using System;
 
-namespace urlhandler.Model;
+namespace urlhandler.Models;
 
 public class Downloads {
   public string FileName { get; set; } = string.Empty;
