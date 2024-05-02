@@ -45,8 +45,11 @@ namespace urlhandler.ViewModels {
 
 
     [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] internal ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesEdited))] internal ObservableCollection<EditedFiles> _editedFiles = new ObservableCollection<EditedFiles>();
     [ObservableProperty] internal int _selectedDownloadedFileIndex = -1;
+    [ObservableProperty] internal int _selectedEditedFileIndex = -1;
     [ObservableProperty] internal bool _hasFilesDownloaded = !false;
+    [ObservableProperty] internal bool _hasFilesEdited = !false;
     [ObservableProperty] internal double _fileUpDownProgress = 0.0f;
     [ObservableProperty] internal string _fileUpDownProgressText = "";
     [ObservableProperty] internal string _url = "";

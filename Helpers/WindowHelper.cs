@@ -9,6 +9,8 @@ using Avalonia;
 
 namespace urlhandler.Helpers {
   internal static class WindowHelper {
+    public static MainWindowViewModel? MainWindowViewModel { get; set; }
+    public static MainWindow? MainWindow { get; set; }
     internal static void Deactivate(MainWindowViewModel mainWindowView) {
       if (mainWindowView.isMinimizedByIdleTimer == false && mainWindowView.mainWindow.WindowState == WindowState.Minimized) {
         mainWindowView.mainWindow.ShowInTaskbar = false;
