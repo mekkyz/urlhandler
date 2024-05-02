@@ -4,6 +4,7 @@ using urlhandler.Models;
 using urlhandler.Services.Abstract;
 using urlhandler.ViewModels;
 using System.IO;
+using System.Linq;
 using urlhandler.Helpers;
 
 namespace urlhandler.Services.Concrete {
@@ -25,6 +26,12 @@ namespace urlhandler.Services.Concrete {
             FilePath = filePath,
             FileTime = File.GetLastWriteTime(filePath),
           };
+
+          if (WindowHelper.MainWindowViewModel.DownloadedFiles.Where(x => x.FilePath == filePath).FirstOrDefault() == null) {
+            File.SetCreationTime(filePath, DateTime.Now);
+
+          }
+
           var lastWrite = File.GetLastWriteTime(filePath);
           var creationTime = File.GetCreationTime(filePath);
 

@@ -32,7 +32,7 @@ namespace urlhandler.Services.Concrete {
             Downloads previouslyUploadedFile =
               previouslyUploadedFiles.Find(f => f.FilePath == filePath)
               ?? throw new InvalidOperationException("File not found.");
-            if (previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
+            if (previouslyUploadedFile != null && lastWriteTime < previouslyUploadedFile.FileTime) {
               mainWindowView.Status = $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
               await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
               continue;
@@ -50,6 +50,7 @@ namespace urlhandler.Services.Concrete {
             mainWindowView.Status = response.IsSuccessStatusCode ? "File uploaded successfully." : "Failed to upload file.";
             await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
             mainWindowView.DownloadedFiles.RemoveAt(i);
+            //WindowHelper.MainWindow.lBoxEditedFiles.ItemsSource = new ObservableCollection<Downloads>(mainWindowView.DownloadedFiles.Where(x => File.GetLastWriteTime(x.FilePath) > File.GetCreationTime(x.FilePath)).ToList() as List<Downloads>);
           }
         }
       }
@@ -102,6 +103,7 @@ namespace urlhandler.Services.Concrete {
             mainWindowView.Status = response.IsSuccessStatusCode ? "File uploaded successfully." : "Failed to upload file.";
             await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
             mainWindowView.DownloadedFiles.RemoveAt(i);
+            //WindowHelper.MainWindow.lBoxEditedFiles.ItemsSource = new ObservableCollection<Downloads>(mainWindowView.DownloadedFiles.Where(x => File.GetLastWriteTime(x.FilePath) > File.GetCreationTime(x.FilePath)).ToList() as List<Downloads>);
           }
           catch (Exception ex) {
             mainWindowView.Status = $"Error uploading File {i + 1}: {ex.Message}";
