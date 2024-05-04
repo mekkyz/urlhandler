@@ -12,13 +12,17 @@ namespace urlhandler.Services.Concrete {
     public void ProcessFile(string? filePath, MainWindowViewModel mainWindowView) {
       try {
         if (filePath != null) {
-          WindowHelper.MainWindowViewModel._fileProcess?.Dispose();
+          WindowHelper.MainWindowViewModel?._fileProcess?.Dispose();
 
-          WindowHelper.MainWindowViewModel._fileProcess = new Process {
-            StartInfo = new ProcessStartInfo(filePath) {
-              UseShellExecute = true
-            }
-          };
+          if (WindowHelper.MainWindowViewModel != null) {
+              WindowHelper.MainWindowViewModel._fileProcess = new Process {
+                  StartInfo = new ProcessStartInfo(filePath) {
+                      UseShellExecute = true
+                  }
+              };
+          } else {
+              throw new InvalidOperationException("MainWindowViewModel is not initialized.");
+          }
           WindowHelper.MainWindowViewModel._fileProcess.Start();
 
           Downloads download = new Downloads() {

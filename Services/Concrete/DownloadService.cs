@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace urlhandler.Services.Concrete {
-  internal class DownloadService : IDowloadService {
+  internal class DownloadService : IDownloadService {
     TokenService _tokenService;
     public DownloadService() {
       _tokenService = new TokenService();

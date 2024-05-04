@@ -11,55 +11,38 @@ namespace urlhandler {
     private static DateTime _openingTime;
     public MainWindow() {
       InitializeComponent();
-      System.Timers.Timer timer = new System.Timers.Timer(3000);
-      // Hook up the Elapsed event for the timer. 
+      Timer timer = new Timer(3000);
+      // hook up elapsed event for the timer. 
       timer.Elapsed += OnTimedEvent;
       timer.AutoReset = true;
       timer.Enabled = true;
       _openingTime = DateTime.Now;
     }
 
-    private static void OnTimedEvent(Object source, ElapsedEventArgs e) {
-      var downloadedFiles = WindowHelper.MainWindowViewModel.DownloadedFiles;
+    private static void OnTimedEvent(object? source, ElapsedEventArgs e) {
+      var downloadedFiles = WindowHelper.MainWindowViewModel?.DownloadedFiles;
+      if (downloadedFiles != null) {
+        for (int i = 0; i < downloadedFiles.Count; i++) {
+          var file = downloadedFiles[i];
+          if (file?.FilePath != null) {
+            var lastWrite = File.GetLastWriteTime(file.FilePath);
+            var creationTime = File.GetCreationTime(file.FilePath);
+            var temp = WindowHelper.MainWindowViewModel?.EditedFiles.FirstOrDefault(x => x.FilePath == file.FilePath);
 
-      for (int i = 0; i < downloadedFiles.Count; i++) {
-        var lastWrite = File.GetLastWriteTime(downloadedFiles[i].FilePath);
-        var creationTime = File.GetCreationTime(downloadedFiles[i].FilePath);
-
-        var temp = WindowHelper.MainWindowViewModel.EditedFiles.Where(x => x.FilePath == downloadedFiles[i].FilePath).FirstOrDefault();
-        if (lastWrite < creationTime) {
-          // do nothing here
-        }
-        else if (lastWrite.Second != creationTime.Second) {
-          if (WindowHelper.MainWindowViewModel.EditedFiles.Count == 0) {
-            WindowHelper.MainWindowViewModel.EditedFiles.Add(new EditedFiles() {
-              FileName = downloadedFiles[i].FileName,
-              FilePath = downloadedFiles[i].FilePath,
-              FileTime = lastWrite,
-              LastEdit = lastWrite,
-              IsUpdated = true
-            });
-          }
-          else if (temp != null) {
-            WindowHelper.MainWindowViewModel.EditedFiles.Where(x => x.FilePath == downloadedFiles[i].FilePath).FirstOrDefault().LastEdit = lastWrite;
-          }
-          else if (temp != null && temp.LastEdit.Second != lastWrite.Second) {
-            WindowHelper.MainWindowViewModel.EditedFiles.Add(new EditedFiles() {
-              FileName = downloadedFiles[i].FileName,
-              FilePath = downloadedFiles[i].FilePath,
-              FileTime = lastWrite,
-              LastEdit = lastWrite,
-              IsUpdated = true
-            });
-          }
-          else if (temp == null) {
-            WindowHelper.MainWindowViewModel.EditedFiles.Add(new EditedFiles() {
-              FileName = downloadedFiles[i].FileName,
-              FilePath = downloadedFiles[i].FilePath,
-              FileTime = lastWrite,
-              LastEdit = lastWrite,
-              IsUpdated = true
-            });
+            if (lastWrite >= creationTime && lastWrite.Second != creationTime.Second) {
+              if (temp != null) {
+                temp.LastEdit = lastWrite;
+              }
+              else {
+                WindowHelper.MainWindowViewModel?.EditedFiles.Add(new EditedFiles {
+                  FileName = file.FileName,
+                  FilePath = file.FilePath,
+                  FileTime = lastWrite,
+                  LastEdit = lastWrite,
+                  IsUpdated = true
+                });
+              }
+            }
           }
         }
       }

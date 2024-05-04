@@ -5,7 +5,7 @@ namespace urlhandler.Services.Concrete {
     const int scale = 1024;
 
     public string FormatBytes(long bytes) {
-      string[] orders = new string[] { "B", "KB", "MB", "GB", "TB" };
+      var orders = new[] { "B", "KB", "MB", "GB", "TB" };
       int orderIndex = 0;
       decimal adjustedBytes = bytes;
       while (adjustedBytes >= scale && orderIndex < orders.Length - 1) {

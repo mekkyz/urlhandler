@@ -28,8 +28,6 @@ namespace urlhandler.ViewModels {
     internal bool isMinimizedByIdleTimer = false;
     internal MainWindow mainWindow;
     internal string[] args = { "", "" };
-
-
     internal Timer? _debounceTimer;
     internal ByteService _byteService;
     internal DownloadService _downloadService;
@@ -40,22 +38,19 @@ namespace urlhandler.ViewModels {
     internal FileService _fileService;
     internal NotificationHelper _notificationHelper;
     internal ProcessHelper _processHelper;
-
     internal Process? _fileProcess;
-
-
     [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] internal ObservableCollection<Downloads> _downloadedFiles = new ObservableCollection<Downloads>();
     [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesEdited))] internal ObservableCollection<EditedFiles> _editedFiles = new ObservableCollection<EditedFiles>();
     [ObservableProperty] internal int _selectedDownloadedFileIndex = -1;
     [ObservableProperty] internal int _selectedEditedFileIndex = -1;
-    [ObservableProperty] internal bool _hasFilesDownloaded = !false;
-    [ObservableProperty] internal bool _hasFilesEdited = !false;
+    [ObservableProperty] internal bool _hasFilesDownloaded = true;
+    [ObservableProperty] internal bool _hasFilesEdited = true;
     [ObservableProperty] internal double _fileUpDownProgress = 0.0f;
     [ObservableProperty] internal string _fileUpDownProgressText = "";
     [ObservableProperty] internal string _url = "";
     [ObservableProperty] internal string _status = "";
     [ObservableProperty] internal ObservableCollection<string> _history = new ObservableCollection<string>();
-    [ObservableProperty] internal bool _hasHistory = !false;
+    [ObservableProperty] internal bool _hasHistory = true;
     [ObservableProperty] internal int _selectedHistoryIndex = -1;
     [ObservableProperty] internal object? _selectedUrl;
     [ObservableProperty] internal bool _isAlreadyProcessing = false;
@@ -65,7 +60,6 @@ namespace urlhandler.ViewModels {
     public MainWindowViewModel(MainWindow mainWindow, string[] args) {
       this.mainWindow = mainWindow;
       this.args = args ?? throw new ArgumentNullException(nameof(args));
-
 
       _byteService = new ByteService();
       _downloadService = new DownloadService();
@@ -78,7 +72,6 @@ namespace urlhandler.ViewModels {
       _processHelper = new ProcessHelper();
 
       SetupEventHandlers();
-
     }
 
     private void SetupEventHandlers() {
@@ -130,8 +123,9 @@ namespace urlhandler.ViewModels {
     internal void MinimizeWindowOnIdle() {
       try {
         var window = mainWindow;
-        idleTimer = new DispatcherTimer();
-        idleTimer.Interval = TimeSpan.FromSeconds(300);
+        idleTimer = new DispatcherTimer {
+          Interval = TimeSpan.FromSeconds(300)
+        };
         idleTimer.Tick += async (sender, e) => {
           var elapsedTime = DateTime.Now - lastInteractionTime;
           if (elapsedTime.TotalSeconds > 300) {
@@ -155,37 +149,31 @@ namespace urlhandler.ViewModels {
     }
 
     internal void InitializeSystemTrayIcon() {
-      var _trayMenu = new NativeMenu();
-      _trayMenu.Add(
-          new NativeMenuItem {
-            Header = "Maximize",
-            Command = new RelayCommand(() => {
-              Dispatcher.UIThread.Invoke(() => {
-                mainWindow.WindowState = WindowState.Maximized;
-                mainWindow.ShowInTaskbar = true;
-              });
-            })
-          }
-      );
-      _trayMenu.Add(
-          new NativeMenuItem {
-            Header = "Upload all edited files",
-            Command = new RelayCommand(async () => {
-              await UploadFiles(this, ignoreIndex: true);
-            })
-          }
-      );
-
-      _trayMenu.Add(
-          new NativeMenuItem {
-            Header = "Exit",
-            Command = new RelayCommand(() => {
-              if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
-                desktopApp.Shutdown();
-              }
-            })
-          }
-      );
+      var _trayMenu = new NativeMenu {
+        new NativeMenuItem {
+          Header = "Maximize",
+          Command = new RelayCommand(() => {
+            Dispatcher.UIThread.Invoke(() => {
+              mainWindow.WindowState = WindowState.Maximized;
+              mainWindow.ShowInTaskbar = true;
+            });
+          })
+        },
+        new NativeMenuItem {
+          Header = "Upload all edited files",
+          Command = new RelayCommand(async () => {
+            await UploadFiles(this, ignoreIndex: true);
+          })
+        },
+        new NativeMenuItem {
+          Header = "Exit",
+          Command = new RelayCommand(() => {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
+              desktopApp.Shutdown();
+            }
+          })
+        }
+      };
 
       _notifyIcon = new TrayIcon {
         Icon = new(AppDomain.CurrentDomain.BaseDirectory + "icon.ico"),
@@ -201,7 +189,6 @@ namespace urlhandler.ViewModels {
       WindowHelper.ShowWindow();
     }
 
-    #region events
     private void Window_KeyDown(object? sender, KeyEventArgs e) {
       // reset interaction on key press
       ResetLastInteractionTime();
@@ -218,7 +205,5 @@ namespace urlhandler.ViewModels {
       // reset interaction on window focus
       ResetLastInteractionTime();
     }
-    #endregion events
-
   }
 }
