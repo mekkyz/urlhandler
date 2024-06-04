@@ -44,7 +44,7 @@ internal class ProcessHelper {
       string detailedError = $"Network error occurred: {ex.Message}. Please check your connection or contact support if the problem persists.";
       await MessageBoxManager.GetMessageBoxStandard("Error", detailedError).ShowAsync();
     }
-    
+
     catch (Exception ex) {
       Console.WriteLine($"Error in Process method: {ex.Message}");
       throw;

@@ -28,7 +28,7 @@ internal class FileService : IFileService {
         else {
           throw new InvalidOperationException("MainWindowViewModel is not initialized.");
         }
-        
+
         WindowHelper.MainWindowViewModel._fileProcess.Start();
 
         Downloads download = new Downloads() {

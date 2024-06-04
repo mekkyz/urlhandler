@@ -15,7 +15,7 @@ internal class TokenService : ITokenService {
 
       if (response.IsSuccessStatusCode) {
         var content = await response.Content.ReadAsStringAsync();
-        
+
         if (!string.IsNullOrEmpty(content)) {
           mainWindowView.AuthToken = content;
         }

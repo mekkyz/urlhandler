@@ -20,7 +20,7 @@ internal static class InteractionHelper {
       else {
         Console.WriteLine("Error: idleTimer is null.");
       }
-      
+
       mainWindowView._notificationHelper.ShowNotificationAsync("The window has been restored after being idle. You can continue your work.", mainWindowView, "Window Restored").Wait();
     }
   }

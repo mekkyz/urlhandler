@@ -36,7 +36,7 @@ internal class NotificationHelper {
         await mainWindowView.notificationManager!.ShowNotification(nf);
       }
     }
-    
+
     catch (Exception ex) {
       Debug.WriteLine($"Error showing notification: {ex.Message}");
     }

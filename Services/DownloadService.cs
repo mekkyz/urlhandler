@@ -40,7 +40,7 @@ internal class DownloadService : IDownloadService {
       mainWindowView.Status = "Downloading File...";
 
       await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-      
+
       var progress = new Progress<ProgressInfo>(progressInfo => {
         Dispatcher.UIThread.Invoke(() => {
           mainWindowView.FileUpDownProgressText =
