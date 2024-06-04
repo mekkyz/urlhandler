@@ -5,6 +5,7 @@ using urlhandler.Helpers;
 using urlhandler.ViewModels;
 
 namespace urlhandler.Services.Concrete;
+
 internal interface ITokenService {
   Task FetchAuthToken(MainWindowViewModel mainWindowView);
 }

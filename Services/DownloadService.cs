@@ -20,7 +20,6 @@ internal interface IDownloadService {
   Task DownloadFilesConcurrently(IList<string> fileIds, string authtoken, MainWindowViewModel mainWindowView);
 }
 
-
 internal class DownloadService : IDownloadService {
   TokenService _tokenService;
   public DownloadService() => _tokenService = new TokenService();

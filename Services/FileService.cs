@@ -7,6 +7,7 @@ using urlhandler.ViewModels;
 using urlhandler.Helpers;
 
 namespace urlhandler.Services.Concrete;
+
 internal interface IFileService {
   void ProcessFile(string? filePath, MainWindowViewModel mainWindowView);
 }

@@ -10,6 +10,7 @@ using urlhandler.Extensions;
 using urlhandler.Helpers;
 
 namespace urlhandler.Services;
+
 public interface IUploadService {
   Task<bool> UploadFiles(MainWindowViewModel mainWindowView, bool ignoreIndex = false);
 }
@@ -19,12 +20,16 @@ internal class UploadService : IUploadService {
 
     try {
       List<Downloads> previouslyUploadedFiles = mainWindowView.DownloadedFiles.ToList();
+
       if (mainWindowView.DownloadedFiles.Count > 0) {
         for (int i = mainWindowView.DownloadedFiles.Count - 1; i >= 0; i--) {
           string filePath = mainWindowView.DownloadedFiles[i].FilePath;
+
           if (filePath == null || mainWindowView.AuthToken == null)
             return false;
+
           string uploadUrl = ApiHelper.UploadUrl(mainWindowView.AuthToken);
+
           DateTime lastWriteTime = File.GetLastWriteTime(filePath);
           Downloads previouslyUploadedFile =
             previouslyUploadedFiles.Find(f => f.FilePath == filePath)

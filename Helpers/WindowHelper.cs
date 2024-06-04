@@ -85,7 +85,7 @@ public static class WindowHelper {
       };
       idleTimer.Tick += async (sender, e) => {
         var elapsedTime = DateTime.Now - MainWindowViewModel.lastInteractionTime;
-        
+
         if (elapsedTime.TotalSeconds > 300) {
           MainWindowViewModel.isMinimizedByIdleTimer = true;
           window.WindowState = WindowState.Minimized;

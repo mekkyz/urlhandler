@@ -12,20 +12,14 @@ internal class NotificationHelper {
     try {
       string detailedBody = body;
 
-      if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10
+      if ((Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10)
           || Environment.OSVersion.Platform == PlatformID.Unix) {
-
-        if (body.StartsWith("Failed to download")) {
-          detailedBody += " Please check your network connection and ensure the file ID and authentication token are correct.";
-        }
-
-        else if (body.StartsWith("Invalid URL format")) {
-          detailedBody += " Ensure the URL matches the expected pattern.";
-        }
-
-        else if (body.StartsWith("File access error")) {
-          detailedBody += " Make sure the file is not being used by another application and you have sufficient permissions.";
-        }
+        detailedBody = body switch {
+          string s when s.StartsWith("Failed to download") => body + " Please check your network connection and ensure the file ID and authentication token are correct.",
+          string s when s.StartsWith("Invalid URL format") => body + " Ensure the URL matches the expected pattern.",
+          string s when s.StartsWith("File access error") => body + " Make sure the file is not being used by another application and you have sufficient permissions.",
+          _ => body
+        };
 
         Notification nf = new Notification {
           Title = title,
@@ -36,7 +30,6 @@ internal class NotificationHelper {
         await mainWindowView.notificationManager!.ShowNotification(nf);
       }
     }
-
     catch (Exception ex) {
       Debug.WriteLine($"Error showing notification: {ex.Message}");
     }

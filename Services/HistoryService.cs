@@ -4,6 +4,7 @@ using System.Linq;
 using urlhandler.ViewModels;
 
 namespace urlhandler.Services.Concrete;
+
 internal interface IHistoryService {
   void LoadHistory(MainWindowViewModel mainWindowView);
   void AddHistory(MainWindowViewModel mainWindowView, string url);

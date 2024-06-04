@@ -9,6 +9,7 @@ using urlhandler.ViewModels;
 using Uri = System.Uri;
 
 namespace urlhandler.Services.Concrete;
+
 public interface ITrayService {
   void InitializeTray(MainWindowViewModel viewModel);
 }

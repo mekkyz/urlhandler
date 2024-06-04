@@ -37,24 +37,25 @@ public static class HttpClientExtension {
     var totalBytesRead = 0L;
     var totalReportedRead = 0L;
     var buffer = new byte[BufferSize];
-    var bytesRead = 0;
     var contentBytes = new MemoryStream();
 
-    do {
-      bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
-      totalBytesRead += bytesRead;
-      contentBytes.Write(buffer, 0, bytesRead);
+    while (true) {
+      var bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+      if (bytesRead == 0)
+        break;
 
-      if (totalBytesRead - totalReportedRead > BufferSize) {
-        var _percentage = totalBytesExpected > 0 ? (double)totalBytesRead / totalBytesExpected * 100 : -1;
-        progress.Report(new ProgressInfo(totalBytesRead, totalBytesExpected, _percentage));
+      totalBytesRead += bytesRead;
+      await contentBytes.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+
+      if (totalBytesRead - totalReportedRead >= BufferSize) {
+        var percentage = totalBytesExpected > 0 ? (double)totalBytesRead / totalBytesExpected * 100 : -1;
+        progress.Report(new ProgressInfo(totalBytesRead, totalBytesExpected, percentage));
         totalReportedRead = totalBytesRead;
       }
     }
-    while (bytesRead > 0);
 
-    var percentage = totalBytesExpected > 0 ? (double)totalBytesRead / totalBytesExpected * 100 : -1;
-    progress.Report(new ProgressInfo(totalBytesRead, totalBytesExpected, percentage));
+    var finalPercentage = totalBytesExpected > 0 ? (double)totalBytesRead / totalBytesExpected * 100 : -1;
+    progress.Report(new ProgressInfo(totalBytesRead, totalBytesExpected, finalPercentage));
 
     return contentBytes.ToArray();
   }

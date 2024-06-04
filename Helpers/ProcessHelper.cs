@@ -6,6 +6,7 @@ using System.Web;
 using urlhandler.ViewModels;
 
 namespace urlhandler.Helpers;
+
 internal class ProcessHelper {
   public async Task HandleProcess(MainWindowViewModel mainWindowView) {
     try {
