@@ -16,7 +16,6 @@ public partial class App : Application {
   public override void OnFrameworkInitializationCompleted() {
     if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
       var mw = new MainWindow();
-      //see .net7 or 8's version of empty array []
       WindowHelper.MainWindowViewModel = new MainWindowViewModel(mw, desktop.Args ?? []);
       mw.DataContext = WindowHelper.MainWindowViewModel;
       desktop.MainWindow = mw;

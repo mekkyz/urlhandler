@@ -79,11 +79,13 @@ public static class WindowHelper {
     try {
       var idleTimer = MainWindowViewModel!.idleTimer;
       var window = MainWindow!;
+
       idleTimer = new DispatcherTimer {
         Interval = TimeSpan.FromSeconds(300)
       };
       idleTimer.Tick += async (sender, e) => {
         var elapsedTime = DateTime.Now - MainWindowViewModel.lastInteractionTime;
+        
         if (elapsedTime.TotalSeconds > 300) {
           MainWindowViewModel.isMinimizedByIdleTimer = true;
           window.WindowState = WindowState.Minimized;
@@ -98,6 +100,7 @@ public static class WindowHelper {
       window.KeyDown += (sender, eventArgs) => InteractionHelper.ResetLastInteractionTime(MainWindowViewModel);
       MainWindowViewModel.lastInteractionTime = DateTime.Now;
     }
+
     catch (Exception ex) {
       Console.WriteLine($"Error in MinimizeWindowOnIdle: {ex.Message}");
       throw;
@@ -107,6 +110,7 @@ public static class WindowHelper {
   public static void ShowWindow() {
     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
       var mainWindow = desktopApp.MainWindow;
+
       if (mainWindow != null) {
         mainWindow.Show();
         mainWindow.WindowState = WindowState.Normal;

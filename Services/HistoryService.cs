@@ -80,6 +80,7 @@ internal class HistoryService : IHistoryService {
         throw new IndexOutOfRangeException("Selected history index is out of range.");
       }
     }
+
     catch (Exception ex) {
       Console.WriteLine($"Error in OnSelectedHistoryIndexChanged: {ex.Message}");
       throw;

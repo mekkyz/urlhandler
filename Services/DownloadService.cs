@@ -32,10 +32,15 @@ internal class DownloadService : IDownloadService {
       mainWindowView.AuthToken = token;
 
       var _url = new Uri(mainWindowView.Url);
+
       ApiHelper.apiHost = $"{_url.Scheme}://{_url.Host}";
+
       string downloadUrl = ApiHelper.DownloadUrl(token);
+
       mainWindowView.Status = "Downloading File...";
+
       await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+      
       var progress = new Progress<ProgressInfo>(progressInfo => {
         Dispatcher.UIThread.Invoke(() => {
           mainWindowView.FileUpDownProgressText =
@@ -44,18 +49,22 @@ internal class DownloadService : IDownloadService {
           mainWindowView.Status = mainWindowView.FileUpDownProgressText;
         });
       });
+
       var (response, fileContentBytes) = await mainWindowView._httpClient.GetWithProgressAsync(downloadUrl, progress);
+
       Debug.WriteLine(response);
+
       HttpContentHeaders headers = response.Content.Headers;
+
       var _headers = headers.ToImmutableDictionary();
       var contentDisposition = _headers["Content-Disposition"].FirstOrDefault();
-
 
       if (!response.IsSuccessStatusCode ||
           contentDisposition == null ||
           !contentDisposition.Contains("filename")) {
         mainWindowView.Status = "Failed to download file.";
         await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+
         return null;
       }
 
@@ -66,6 +75,7 @@ internal class DownloadService : IDownloadService {
       }
       mainWindowView.Status = "File downloaded successfully.";
       await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+
       return filePath;
     }
     catch (Exception ex) {
@@ -83,6 +93,7 @@ internal class DownloadService : IDownloadService {
   public async Task DownloadFilesConcurrently(IList<string> fileIds, string authtoken, MainWindowViewModel mainWindowView) {
     var downloadTasks = fileIds.Select(fileId => mainWindowView._downloadService.DownloadFile(mainWindowView));
     var files = await Task.WhenAll(downloadTasks);
+
     foreach (var file in files.Where(f => f != null)) {
       mainWindowView._fileService.ProcessFile(file, mainWindowView);
     }

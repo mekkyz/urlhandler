@@ -41,6 +41,7 @@ public class TrayService : ITrayService {
                 })
             }
         };
+        
     _notifyIcon = new TrayIcon {
       Icon = new(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
       IsVisible = true,

@@ -12,8 +12,10 @@ internal class TokenService : ITokenService {
   public async Task FetchAuthToken(MainWindowViewModel mainWindowView) {
     try {
       var response = await mainWindowView._httpClient.GetAsync(ApiHelper.TokenUrl());
+
       if (response.IsSuccessStatusCode) {
         var content = await response.Content.ReadAsStringAsync();
+        
         if (!string.IsNullOrEmpty(content)) {
           mainWindowView.AuthToken = content;
         }
@@ -27,10 +29,12 @@ internal class TokenService : ITokenService {
         throw new HttpRequestException($"Failed to fetch auth token. Status code: {response.StatusCode}");
       }
     }
+
     catch (HttpRequestException ex) {
       Console.WriteLine($"Error fetching auth token: {ex.Message}");
       throw;
     }
+
     catch (Exception ex) {
       Console.WriteLine($"Error fetching auth token: {ex.Message}");
       throw;
