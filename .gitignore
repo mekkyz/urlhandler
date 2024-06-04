@@ -1,6 +1,6 @@
 bin/
 obj/
-.api/node_modules/
+.testapi/
 .config/
 .vs/
 .idea/
