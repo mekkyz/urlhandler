@@ -3,3 +3,4 @@ obj/
 .api/node_modules/
 .config/
 .vs/
+.idea/

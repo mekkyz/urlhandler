@@ -3,8 +3,11 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using urlhandler.Models;
 
-public static class HttpClientExtensions {
+namespace urlhandler.Extensions;
+
+public static class HttpClientExtension {
   private const int BufferSize = 8192;
 
   public static async Task<(HttpResponseMessage Response, byte[] Content)> GetWithProgressAsync(this HttpClient client, string requestUri, IProgress<ProgressInfo> progress, CancellationToken cancellationToken = default) {

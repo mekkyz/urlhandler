@@ -1,9 +1,10 @@
+﻿using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using urlhandler.ViewModels;
-using System;
 using urlhandler.Helpers;
+using urlhandler.Views;
+using urlhandler.ViewModels;
 
 namespace urlhandler;
 
@@ -15,8 +16,8 @@ public partial class App : Application {
   public override void OnFrameworkInitializationCompleted() {
     if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
       var mw = new MainWindow();
-      string[] args = desktop.Args ?? Array.Empty<string>();
-      WindowHelper.MainWindowViewModel = new MainWindowViewModel(mw, args);
+      //see .net7 or 8's version of empty array []
+      WindowHelper.MainWindowViewModel = new MainWindowViewModel(mw, desktop.Args ?? []);
       mw.DataContext = WindowHelper.MainWindowViewModel;
       desktop.MainWindow = mw;
       desktop.MainWindow.DataContext = mw.DataContext;

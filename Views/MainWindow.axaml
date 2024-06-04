@@ -1,0 +1,145 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="urlhandler.Views.MainWindow"
+        Title="URL Handler"
+        Width="500"
+        MinWidth="500"
+        Height="570"
+        MinHeight="550"
+        x:DataType="viewModels:MainWindowViewModel"
+        Icon="/Assets/icon.ico"
+        xmlns:i="https://github.com/projektanker/icons.avalonia"
+        xmlns:viewModels="clr-namespace:urlhandler.ViewModels"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowStartupLocation="Manual">
+    <StackPanel>
+        <StackPanel Margin="20,40,20,10" Spacing="20">
+            <Grid ColumnDefinitions="auto,*,auto">
+                <Image Grid.Column="1" Source="/Assets/logo.png" Height="92" />
+                <ToggleButton IsChecked="{Binding IsDarkMode}" Grid.Column="1" HorizontalAlignment="Right"
+                              Height="32"
+                              Width="32"
+                              Padding="4"
+                              CornerRadius="32">
+                    <i:Icon Value="{Binding ThemeButtonIcon}" HorizontalAlignment="Center"
+                            VerticalAlignment="Center"/>
+                </ToggleButton>
+            </Grid>
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Spacing="5">
+                <TextBlock Text="Enter URL" FontWeight="Medium" FontSize="18" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="UriBox"
+                             Text="{Binding Url}"
+                             CornerRadius="8"
+                             Margin="0,5"
+                             BorderThickness="2"
+                             BorderBrush="#d0d0d0"
+                             Watermark="https://example.com" />
+                    <Button Classes="ImageButton"
+                            Grid.Column="1"
+                            Command="{Binding ProcessCommand}"
+                            HorizontalAlignment="Stretch" Padding="10"
+                            Background="#ff00579c" Foreground="White"
+                            CornerRadius="8" BorderThickness="2"
+                            Margin="5,5,0,5"
+                            i:Attached.Icon="fa-solids fa-download" />
+                </Grid>
+                <ProgressBar Height="32" Margin="0,5" ShowProgressText="True" Value="{Binding FileUpDownProgress}" />
+                <TabControl>
+                    <TabItem Header="History" FontSize="20">
+                        <ScrollViewer>
+                            <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
+                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-trash" Grid.Column="1"
+                                        Command="{Binding DeleteHistoryCommand}"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"/>
+                                <ListBox Grid.Row="1" Background="Transparent"
+                                         IsVisible="{Binding HasHistory}"
+                                         ItemsSource="{Binding History}"
+                                         SelectedIndex="{Binding SelectedHistoryIndex, Mode=TwoWay}"
+                                         Height="100">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock FontWeight="DemiBold" FontSize="14" FontFamily="Arial" Text="{Binding}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.." IsVisible="{Binding !HasHistory}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium" FontSize="18" />
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="Downloaded" FontSize="20">
+                        <ScrollViewer>
+                            <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
+                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" Command="{Binding UploadFilesCommand}"/>
+                                <ListBox Grid.Row="1" Background="Transparent"
+                                         ItemsSource="{Binding DownloadedFiles}"
+                                         x:Name="lBoxDownloadedFiles"
+                                         IsVisible="{Binding HasFilesDownloaded}"
+                                         SelectedIndex="{Binding SelectedDownloadedFileIndex, Mode=TwoWay}"
+                                         Height="100">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Spacing="3">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding FileName}" FontWeight="Bold" Grid.Column="0"/>
+                                                    <TextBlock Text="{Binding FileTime}" Grid.Column="1" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                                <TextBlock FontWeight="SemiBold">
+                                                    <Run Text="Location: "/>
+                                                    <Run Text="{Binding FilePath}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+                    <!-- <TabItem Header="Edited" FontSize="20">
+                        <ScrollViewer>
+                            <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
+                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" Command="{Binding UploadFilesCommand}"/>
+                                <ListBox Grid.Row="1" Background="Transparent"
+                                         ItemsSource="{Binding EditedFiles}"
+                                         x:Name="lBoxEditedFiles"
+                                         IsVisible="{Binding HasFilesDownloaded}"
+                                         SelectedIndex="{Binding SelectedDownloadedFileIndex, Mode=TwoWay}"
+                                         Height="100">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Spacing="3">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding FileName}" FontWeight="Bold" Grid.Column="0"/>
+                                                    <TextBlock Text="{Binding LastEdit}" Grid.Column="1" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                                <TextBlock FontWeight="SemiBold">
+                                                    <Run Text="Location: "/>
+                                                    <Run Text="{Binding FilePath}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem> -->
+                </TabControl>
+            </StackPanel>
+            <TextBlock Grid.Column="1" Margin="10" Text="{Binding Status}" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontWeight="SemiBold" />
+        </StackPanel>
+    </StackPanel>
+</Window>

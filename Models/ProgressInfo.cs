@@ -1,3 +1,5 @@
+namespace urlhandler.Models;
+
 public class ProgressInfo {
   public long BytesRead { get; }
   public long? TotalBytesExpected { get; }
