@@ -8,30 +8,28 @@ using urlhandler.Helpers;
 using urlhandler.ViewModels;
 using Uri = System.Uri;
 
-namespace urlhandler.Services.Concrete;
+namespace urlhandler.Services;
 
 public interface ITrayService {
   void InitializeTray(MainWindowViewModel viewModel);
 }
 
 public class TrayService : ITrayService {
-  internal TrayIcon? _notifyIcon;
+  TrayIcon? _notifyIcon;
   public void InitializeTray(MainWindowViewModel viewModel) {
     var _trayMenu = new NativeMenu {
             new NativeMenuItem {
-                Header = "Maximize",
+                Header = "Open",
                 Command = new RelayCommand(() => {
                     Dispatcher.UIThread.Invoke(() => {
-                        viewModel.mainWindow.WindowState = WindowState.Maximized;
+                        viewModel.mainWindow.WindowState = WindowState.Normal;
                         viewModel.mainWindow.ShowInTaskbar = true;
                     });
                 })
             },
             new NativeMenuItem {
                 Header = "Upload all edited files",
-                Command = new RelayCommand(async () => {
-                    await new UploadService().UploadFiles(viewModel, ignoreIndex: true);
-                })
+                Command = new RelayCommand(UploadFiles)
             },
             new NativeMenuItem {
                 Header = "Exit",
@@ -44,12 +42,18 @@ public class TrayService : ITrayService {
         };
 
     _notifyIcon = new TrayIcon {
-      Icon = new(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
+      Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
       IsVisible = true,
       ToolTipText = "Url Handler",
       Menu = _trayMenu
     };
     // wire up events
     _notifyIcon.Clicked += (sender, e) => WindowHelper.ShowWindow();
+    return;
+
+    async void UploadFiles() {
+      WindowHelper.MainWindowViewModel!.SelectedDownloadedFileIndex = -1;
+      await new UploadService().UploadEditedFiles();
+    }
   }
 }

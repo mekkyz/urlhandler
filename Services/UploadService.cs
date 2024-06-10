@@ -1,5 +1,6 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,73 +13,114 @@ using urlhandler.Helpers;
 namespace urlhandler.Services;
 
 public interface IUploadService {
-  Task<bool> UploadFiles(MainWindowViewModel mainWindowView, bool ignoreIndex = false);
+  Task<bool> UploadEditedFiles();
 }
+
 internal class UploadService : IUploadService {
-  public async Task<bool> UploadFiles(MainWindowViewModel mainWindowView, bool ignoreIndex = false) {
-    bool allUploadsSuccessful = true;
+  public async Task<bool> UploadEditedFiles() {
+    if (WindowHelper.MainWindowViewModel?.DownloadedFiles.Count > 0) {
+      if (WindowHelper.MainWindowViewModel?.SelectedDownloadedFileIndex > -1) {
+        var file = WindowHelper.MainWindowViewModel.DownloadedFiles[
+          WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex];
+        var fileSumOnDisk = file.FilePath.FileCheckSum();
+        var fileSumOnDownload = file.FileSumOnDownload;
 
-    try {
-      List<Downloads> previouslyUploadedFiles = mainWindowView.DownloadedFiles.ToList();
+        if (!fileSumOnDisk.Equals(fileSumOnDownload)) {
+          var upload = await Upload(file.FilePath, WindowHelper.MainWindowViewModel);
+          if (upload) {
+            WindowHelper.MainWindowViewModel.DownloadedFiles.RemoveAt(WindowHelper.MainWindowViewModel
+              .SelectedDownloadedFileIndex);
+            Debug.WriteLine(WindowHelper.MainWindowViewModel?.DownloadedFiles.Count);
+          }
+        }
+        else {
+          await NotificationHelper.ShowNotificationAsync("Selected file hasn't been edited yet.", WindowHelper.MainWindowViewModel);
+          return false;
+        }
 
-      if (mainWindowView.DownloadedFiles.Count > 0) {
-        for (int i = mainWindowView.DownloadedFiles.Count - 1; i >= 0; i--) {
-          string filePath = mainWindowView.DownloadedFiles[i].FilePath;
+        await NotificationHelper.ShowNotificationAsync("Selected file hasn't been edited yet.", WindowHelper.MainWindowViewModel!);
+        return false;
+      }
+      else {
+        if (WindowHelper.MainWindowViewModel?.DownloadedFiles != null) {
+          var tempList = WindowHelper.MainWindowViewModel.DownloadedFiles.ToList();
+          var filesToRemove = new ObservableCollection<Downloads>();
 
-          if (filePath == null || mainWindowView.AuthToken == null)
-            return false;
+          foreach (var file in tempList) {
+            var fileSumOnDisk = file.FilePath.FileCheckSum();
+            var fileSumOnDownload = file.FileSumOnDownload;
 
-          string uploadUrl = ApiHelper.UploadUrl(mainWindowView.AuthToken);
-
-          DateTime lastWriteTime = File.GetLastWriteTime(filePath);
-          Downloads previouslyUploadedFile =
-            previouslyUploadedFiles.Find(f => f.FilePath == filePath)
-            ?? throw new InvalidOperationException("File not found.");
-
-          if (!ignoreIndex && previouslyUploadedFile != null && lastWriteTime <= previouslyUploadedFile.FileTime) {
-            mainWindowView.Status = $"File {i + 1} ({new FileInfo(filePath).Name}) has not been modified since the last upload. Skipping...";
-            await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-            continue;
+            if (!fileSumOnDisk.Equals(fileSumOnDownload)) {
+              var upload = await this.Upload(file.FilePath, WindowHelper.MainWindowViewModel);
+              if (upload) {
+                filesToRemove.Add(file);
+              }
+            }
           }
 
-          byte[] fileContentBytes = await File.ReadAllBytesAsync(filePath);
+          foreach (var file in filesToRemove) {
+            WindowHelper.MainWindowViewModel.DownloadedFiles.Remove(file);
+          }
+          return true;
+        }
 
-          var content = new MultipartFormDataContent {
-              { new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath) }
-          };
-          var fileName = new FileInfo(filePath).Name;
-
-          content.Add(new StringContent(fileName), "attachmentName");
-
-          var progress = new Progress<ProgressInfo>(progress => {
-            mainWindowView.FileUpDownProgressText = $"Uploaded {progress.BytesRead.FormatBytes()} out of {progress.TotalBytesExpected?.FormatBytes() ?? "0"}.";
-            mainWindowView.Status = mainWindowView.FileUpDownProgressText;
-            mainWindowView.FileUpDownProgress = progress.Percentage;
-          });
-          var response = await mainWindowView._httpClient.PostWithProgressAsync(uploadUrl, content, progress);
-
-          mainWindowView.Status = response.IsSuccessStatusCode ? "File uploaded successfully." : "Failed to upload file.";
-
-          await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-
-          mainWindowView.DownloadedFiles.RemoveAt(i);
+        else {
+          await NotificationHelper.ShowNotificationAsync("No file has been downloaded yet.",
+            WindowHelper.MainWindowViewModel!);
+          return false;
         }
       }
     }
-
-    catch (Exception ex) {
-      mainWindowView.Status = $"Error uploading files: {ex.Message}";
-      await mainWindowView._notificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-      allUploadsSuccessful = false;
-    }
-
-    if (mainWindowView.DownloadedFiles.Count < 1) {
-      mainWindowView.HasFilesDownloaded = false;
-    }
     else {
-      mainWindowView.HasFilesDownloaded = true;
+      await NotificationHelper.ShowNotificationAsync("Download something first.", WindowHelper.MainWindowViewModel!);
+      return false;
     }
+  }
 
-    return allUploadsSuccessful;
+  public async Task<bool> Upload(string filePath, MainWindowViewModel mainView) {
+    try {
+      if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath)) {
+        byte[] fileContentBytes = await File.ReadAllBytesAsync(filePath);
+
+        var content = new MultipartFormDataContent {
+          { new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath) }
+        };
+        var fileName = new FileInfo(filePath).Name;
+        content.Add(new StringContent(fileName), "attachmentName");
+
+        var fileSize = new FileInfo(filePath).Length.FormatBytes();
+        var progress = new Progress<ProgressInfo>(prog => {
+          var currentProgress = prog.BytesRead > new FileInfo(filePath).Length
+            ? fileSize
+            : prog.BytesRead.FormatBytes();
+          mainView.FileUpDownProgressText = $"Uploaded {currentProgress} out of {fileSize}.";
+          mainView.Status = mainView.FileUpDownProgressText;
+          mainView.FileUpDownProgress = prog.Percentage;
+        });
+
+        var response = await mainView._httpClient.PostWithProgressAsync(ApiHelper.UploadUrl(mainView.AuthToken),
+          content, progress, isUpload: true);
+
+        if (response.IsSuccessStatusCode) {
+          mainView.Status = "File uploaded successfully.";
+          await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+          return true;
+        }
+        else {
+          mainView.Status = "Upload failed.";
+          await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+          return false;
+        }
+      }
+
+      mainView.Status = "File path is invalid or file does not exist.";
+      await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+      return false;
+    }
+    catch (Exception) {
+      mainView.Status = "An error occurred during upload.";
+      await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+      return false;
+    }
   }
 }

@@ -5,26 +5,38 @@
         Width="500"
         MinWidth="500"
         Height="570"
-        MinHeight="550"
+        MinHeight="600"
+        SizeToContent="Height"
         x:DataType="viewModels:MainWindowViewModel"
+        xmlns:system="using:System"
         Icon="/Assets/icon.ico"
+        xmlns:ia="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
         xmlns:i="https://github.com/projektanker/icons.avalonia"
         xmlns:viewModels="clr-namespace:urlhandler.ViewModels"
+        xmlns:converters="clr-namespace:urlhandler.Converters"
+        xmlns:behaviors="clr-namespace:urlhandler.Behaviors"
         ExtendClientAreaToDecorationsHint="True"
         WindowStartupLocation="Manual">
+    <Window.Resources>
+        <converters:HistoryDateConverter x:Key="dateConv" />
+        <converters:HistoryUrlConverter x:Key="urlConv" />
+        <system:Double x:Key="ListHeight">200</system:Double>
+    </Window.Resources>
+
     <StackPanel>
-        <StackPanel Margin="20,40,20,10" Spacing="20">
-            <Grid ColumnDefinitions="auto,*,auto">
-                <Image Grid.Column="1" Source="/Assets/logo.png" Height="92" />
-                <ToggleButton IsChecked="{Binding IsDarkMode}" Grid.Column="1" HorizontalAlignment="Right"
-                              Height="32"
-                              Width="32"
-                              Padding="4"
-                              CornerRadius="32">
-                    <i:Icon Value="{Binding ThemeButtonIcon}" HorizontalAlignment="Center"
-                            VerticalAlignment="Center"/>
-                </ToggleButton>
-            </Grid>
+        <ToggleButton Margin="0,15,15,10" IsChecked="{Binding IsDarkMode}" Grid.Column="0" HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      Height="32"
+                      Width="32"
+                      Padding="4"
+                      CornerRadius="32">
+            <i:Icon Value="{Binding ThemeButtonIcon}" HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+        </ToggleButton>
+        <StackPanel Margin="20,0,20,10" Spacing="20">
+            <Image HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Source="/Assets/logo.png" Height="130" />
             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Spacing="5">
                 <TextBlock Text="Enter URL" FontWeight="Medium" FontSize="18" />
                 <Grid>
@@ -38,7 +50,11 @@
                              Margin="0,5"
                              BorderThickness="2"
                              BorderBrush="#d0d0d0"
-                             Watermark="https://example.com" />
+                             Watermark="https://www.example.com/link/to/api/endpoint/{token}">
+                        <ia:Interaction.Behaviors>
+                            <behaviors:UrlBoxBehavior />
+                        </ia:Interaction.Behaviors>
+                    </TextBox>
                     <Button Classes="ImageButton"
                             Grid.Column="1"
                             Command="{Binding ProcessCommand}"
@@ -48,98 +64,110 @@
                             Margin="5,5,0,5"
                             i:Attached.Icon="fa-solids fa-download" />
                 </Grid>
-                <ProgressBar Height="32" Margin="0,5" ShowProgressText="True" Value="{Binding FileUpDownProgress}" />
                 <TabControl>
                     <TabItem Header="History" FontSize="20">
                         <ScrollViewer>
                             <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
-                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-trash" Grid.Column="1"
+                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent"
+                                        BorderThickness="0" i:Attached.Icon="fa-solids fa-trash" Grid.Column="1"
                                         Command="{Binding DeleteHistoryCommand}"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"/>
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" />
                                 <ListBox Grid.Row="1" Background="Transparent"
                                          IsVisible="{Binding HasHistory}"
                                          ItemsSource="{Binding History}"
                                          SelectedIndex="{Binding SelectedHistoryIndex, Mode=TwoWay}"
-                                         Height="100">
+                                         Height="{StaticResource ListHeight}">
+
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock FontWeight="DemiBold" FontSize="14" FontFamily="Arial" Text="{Binding}" />
+                                            <StackPanel Spacing="3">
+                                                <Grid RowDefinitions="auto *">
+
+                                                    <TextBlock Text="{Binding ., Converter={StaticResource dateConv} }"
+                                                               FontWeight="Bold"
+                                                               HorizontalAlignment="Left" />
+                                                    <TextBlock Grid.Row="1"
+                                                               Text="{Binding ., Converter={StaticResource urlConv} }" />
+                                                </Grid>
+
+                                            </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.." IsVisible="{Binding !HasHistory}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium" FontSize="18" />
+                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.."
+                                           IsVisible="{Binding !HasHistory}" TextWrapping="Wrap"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium"
+                                           FontSize="18" />
                             </Grid>
                         </ScrollViewer>
                     </TabItem>
                     <TabItem Header="Downloaded" FontSize="20">
                         <ScrollViewer>
                             <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
-                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" Command="{Binding UploadFilesCommand}"/>
+                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent"
+                                        BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
+                                        Command="{Binding UploadFilesCommand}" />
                                 <ListBox Grid.Row="1" Background="Transparent"
                                          ItemsSource="{Binding DownloadedFiles}"
-                                         x:Name="lBoxDownloadedFiles"
                                          IsVisible="{Binding HasFilesDownloaded}"
                                          SelectedIndex="{Binding SelectedDownloadedFileIndex, Mode=TwoWay}"
-                                         Height="100">
+                                         Height="{StaticResource ListHeight}"
+                                         x:Name="downBox">
+                                    <ia:Interaction.Behaviors>
+                                        <EventTriggerBehavior EventName="DoubleTapped" SourceObject="downBox">
+                                            <InvokeCommandAction Command="{Binding OnDownloadDoubleTapped}" />
+                                        </EventTriggerBehavior>
+                                    </ia:Interaction.Behaviors>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Spacing="3">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding FileName}" FontWeight="Bold" Grid.Column="0"/>
-                                                    <TextBlock Text="{Binding FileTime}" Grid.Column="1" HorizontalAlignment="Right"/>
+                                            <Border>
+                                                <Grid ClipToBounds="True" ColumnDefinitions="* auto"
+                                                      RowDefinitions="auto *">
+                                                    <Border Grid.Column="1"
+                                                            CornerRadius="20"
+                                                            Margin="0,0,40,0"
+                                                            Padding="2"
+                                                            Background="ForestGreen"
+                                                            IsVisible="{Binding IsEdited, Mode=TwoWay}"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                    >
+                                                        <TextBlock
+                                                            ClipToBounds="True"
+                                                            FontSize="10"
+                                                            Text="Edited"
+                                                            Padding="4"/>
+                                                  
+                                                    </Border>
+                                                    <TextBlock Text="{Binding FileSize}"
+                                                               Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                    
+                                                    <TextBlock Text="{Binding FileName}" FontWeight="Bold"
+                                                               Grid.Column="0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" FontWeight="SemiBold">
+                                                        <Run Text="Location: " />
+                                                        <Run Text="{Binding FilePath}" />
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding FileDownloadTimeStamp}"
+                                                               Grid.Column="1"
+                                                               Grid.Row="1" HorizontalAlignment="Right" />
                                                 </Grid>
-                                                <TextBlock FontWeight="SemiBold">
-                                                    <Run Text="Location: "/>
-                                                    <Run Text="{Binding FilePath}"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                            </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.."
+                                           IsVisible="{Binding !HasFilesDownloaded}" TextWrapping="Wrap"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium"
+                                           FontSize="18" />
                             </Grid>
                         </ScrollViewer>
                     </TabItem>
-                    <!-- <TabItem Header="Edited" FontSize="20">
-                        <ScrollViewer>
-                            <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
-                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" Command="{Binding UploadFilesCommand}"/>
-                                <ListBox Grid.Row="1" Background="Transparent"
-                                         ItemsSource="{Binding EditedFiles}"
-                                         x:Name="lBoxEditedFiles"
-                                         IsVisible="{Binding HasFilesDownloaded}"
-                                         SelectedIndex="{Binding SelectedDownloadedFileIndex, Mode=TwoWay}"
-                                         Height="100">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Spacing="3">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding FileName}" FontWeight="Bold" Grid.Column="0"/>
-                                                    <TextBlock Text="{Binding LastEdit}" Grid.Column="1" HorizontalAlignment="Right"/>
-                                                </Grid>
-                                                <TextBlock FontWeight="SemiBold">
-                                                    <Run Text="Location: "/>
-                                                    <Run Text="{Binding FilePath}"/>
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </Grid>
-                        </ScrollViewer>
-                    </TabItem> -->
                 </TabControl>
             </StackPanel>
-            <TextBlock Grid.Column="1" Margin="10" Text="{Binding Status}" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="1" Margin="10" Text="{Binding Status}" HorizontalAlignment="Right"
+                       VerticalAlignment="Bottom" FontWeight="SemiBold" />
         </StackPanel>
     </StackPanel>
 </Window>

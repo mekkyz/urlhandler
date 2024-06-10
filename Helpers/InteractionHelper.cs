@@ -24,7 +24,7 @@ internal static class InteractionHelper {
       Console.WriteLine("Error: idleTimer is null.");
     }
 
-    mainWindowView._notificationHelper.ShowNotificationAsync(
+    NotificationHelper.ShowNotificationAsync(
       "The window has been restored after being idle. You can continue your work.",
       mainWindowView,
       "Window Restored"

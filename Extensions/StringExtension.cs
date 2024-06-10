@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Security.Cryptography;
+
 namespace urlhandler.Extensions;
 
 public static class StringExtension {
@@ -15,5 +19,11 @@ public static class StringExtension {
 
     // format the bytes with the appropriate unit
     return $"{adjustedBytes:##.##} {orders[orderIndex]}";
+  }
+  public static string FileCheckSum(this string filePath) {
+    using var stream = File.OpenRead(filePath);
+    using var sha256 = SHA256.Create();
+    var checksum = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", "").ToLower();
+    return checksum;
   }
 }

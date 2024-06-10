@@ -1,13 +1,7 @@
 namespace urlhandler.Models;
 
-public class ProgressInfo {
-  public long BytesRead { get; }
-  public long? TotalBytesExpected { get; }
-  public double Percentage { get; }
-
-  public ProgressInfo(long bytesRead, long? totalBytesExpected, double percentage) {
-    BytesRead = bytesRead;
-    TotalBytesExpected = totalBytesExpected;
-    Percentage = percentage;
-  }
+public class ProgressInfo(long bytesRead, long? totalBytesExpected, double percentage) {
+  public long BytesRead { get; } = bytesRead;
+  public long? TotalBytesExpected { get; } = totalBytesExpected;
+  public double Percentage { get; } = percentage;
 }
