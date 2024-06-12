@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
+using urlhandler.Extensions;
 using urlhandler.Services;
 using urlhandler.ViewModels;
 using urlhandler.Views;
@@ -35,30 +34,20 @@ public static partial class WindowHelper {
 
     Task.Run(async () => {
       if (mainWindowView.args.Length > 0) {
-        var match = UrlProtocolRegex().Match(mainWindowView.args.First());
-        if (!match.Success) {
-          mainWindowView.Status = "Invalid URL format.";
-          await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+        var parsedUrl = mainWindowView.args.First().ParseUrl();
+        if (parsedUrl == null || parsedUrl == "invalid uri") {
+          mainWindowView.Status = FeedbackHelper.InvalidUrl;
+          await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
           return;
         }
-        var encodedUrl = match.Groups[1].Value;
-        var decodedUrl = HttpUtility.UrlDecode(encodedUrl);
-        var authToken = decodedUrl[(decodedUrl.LastIndexOf('/') + 1)..];
-        var downloadUrl = ApiHelper.DownloadUrl(authToken);
-        mainWindowView._filePath = await mainWindowView._downloadService.DownloadFile(mainWindowView, authToken);
-        if (mainWindowView._filePath == null) {
-          mainWindowView.Status = "Failed to download file.";
-          await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+        var authToken = parsedUrl.ExtractAuthToken();
+        if (authToken == null) {
+          mainWindowView.Status = FeedbackHelper.TokenFail;
+          await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
           return;
         }
-
-        if (mainWindowView._filePath == "alreadyExists") {
-          mainWindowView.Status = "Same file or named already being processed.";
-          await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-          return;
-        }
-        mainWindowView.AddHistory(downloadUrl);
-        await mainWindowView._fileService.ProcessFile(mainWindowView._filePath, mainWindowView);
+        mainWindowView.Url = parsedUrl;
+        await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
       }
     });
     MinimizeWindowOnIdle();
@@ -79,21 +68,39 @@ public static partial class WindowHelper {
         window.WindowState = WindowState.Minimized;
         idleTimer.IsEnabled = false;
         idleTimer.Stop();
-        await NotificationHelper.ShowNotificationAsync("Minimized due to inactivity.", MainWindowViewModel, "Auto-minimize");
+        await FeedbackHelper.ShowNotificationAsync(FeedbackHelper.Minimize, MainWindowViewModel);
+        idleTimer.Start();
+        window.PointerPressed += (sender, eventArgs) => ResetLastInteractionTime(MainWindowViewModel);
+        window.PointerMoved += (sender, eventArgs) => ResetLastInteractionTime(MainWindowViewModel);
+        window.KeyDown += (sender, eventArgs) => ResetLastInteractionTime(MainWindowViewModel);
+        MainWindowViewModel.lastInteractionTime = DateTime.Now;
       };
-      idleTimer.Start();
-      window.PointerPressed += (sender, eventArgs) => InteractionHelper.ResetLastInteractionTime(MainWindowViewModel!);
-      window.PointerMoved += (sender, eventArgs) => InteractionHelper.ResetLastInteractionTime(MainWindowViewModel!);
-      window.KeyDown += (sender, eventArgs) => InteractionHelper.ResetLastInteractionTime(MainWindowViewModel!);
-      MainWindowViewModel!.lastInteractionTime = DateTime.Now;
     }
-
     catch (Exception ex) {
       Console.WriteLine($"Error in MinimizeWindowOnIdle: {ex.Message}");
       throw;
     }
   }
 
+  private static void ResetLastInteractionTime(MainWindowViewModel mainWindowView) {
+    mainWindowView.lastInteractionTime = DateTime.Now;
+
+    if (!mainWindowView.isMinimizedByIdleTimer) {
+      return;
+    }
+
+    mainWindowView.mainWindow.WindowState = WindowState.Normal;
+    mainWindowView.mainWindow.ShowInTaskbar = true;
+    mainWindowView.isMinimizedByIdleTimer = false;
+
+    if (mainWindowView.idleTimer != null) {
+      mainWindowView.idleTimer.IsEnabled = true;
+      mainWindowView.idleTimer.Start();
+    }
+    else {
+      Console.WriteLine("Error: idleTimer is null.");
+    }
+  }
   public static void ShowWindow() {
     if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktopApp) return;
     var mainWindow = desktopApp.MainWindow;
@@ -102,7 +109,4 @@ public static partial class WindowHelper {
     mainWindow.WindowState = WindowState.Normal;
     mainWindow.ShowInTaskbar = true;
   }
-
-  [GeneratedRegex(@"^chemotion:\/\/\?url=(http%3A%2F%2F[\w.:%\/=?&-]+)$")]
-  private static partial Regex UrlProtocolRegex();
 }

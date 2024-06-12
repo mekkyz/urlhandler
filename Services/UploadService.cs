@@ -19,7 +19,7 @@ public interface IUploadService {
 internal class UploadService : IUploadService {
   public async Task<bool> UploadEditedFiles() {
     if (WindowHelper.MainWindowViewModel?.DownloadedFiles.Count > 0) {
-      if (WindowHelper.MainWindowViewModel?.SelectedDownloadedFileIndex > -1) {
+      if (WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex > -1) {
         var file = WindowHelper.MainWindowViewModel.DownloadedFiles[
           WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex];
         var fileSumOnDisk = file.FilePath.FileCheckSum();
@@ -27,54 +27,50 @@ internal class UploadService : IUploadService {
 
         if (!fileSumOnDisk.Equals(fileSumOnDownload)) {
           var upload = await Upload(file.FilePath, WindowHelper.MainWindowViewModel);
-          if (upload) {
-            WindowHelper.MainWindowViewModel.DownloadedFiles.RemoveAt(WindowHelper.MainWindowViewModel
-              .SelectedDownloadedFileIndex);
-            Debug.WriteLine(WindowHelper.MainWindowViewModel?.DownloadedFiles.Count);
-          }
-        }
-        else {
-          await NotificationHelper.ShowNotificationAsync("Selected file hasn't been edited yet.", WindowHelper.MainWindowViewModel);
-          return false;
+          if (!upload) return false;
+          WindowHelper.MainWindowViewModel.DownloadedFiles.RemoveAt(WindowHelper.MainWindowViewModel
+            .SelectedDownloadedFileIndex);
+          Debug.WriteLine(WindowHelper.MainWindowViewModel.DownloadedFiles.Count);
+          return true;
+
         }
 
-        await NotificationHelper.ShowNotificationAsync("Selected file hasn't been edited yet.", WindowHelper.MainWindowViewModel!);
+        WindowHelper.MainWindowViewModel.Status = FeedbackHelper.FileNotEdited;
+        await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel.Status, WindowHelper.MainWindowViewModel);
         return false;
       }
-      else {
-        if (WindowHelper.MainWindowViewModel?.DownloadedFiles != null) {
-          var tempList = WindowHelper.MainWindowViewModel.DownloadedFiles.ToList();
-          var filesToRemove = new ObservableCollection<Downloads>();
 
-          foreach (var file in tempList) {
-            var fileSumOnDisk = file.FilePath.FileCheckSum();
-            var fileSumOnDownload = file.FileSumOnDownload;
+      {
+        var tempList = WindowHelper.MainWindowViewModel.DownloadedFiles.ToList();
+        var filesToRemove = new ObservableCollection<Downloads>();
 
-            if (!fileSumOnDisk.Equals(fileSumOnDownload)) {
-              var upload = await this.Upload(file.FilePath, WindowHelper.MainWindowViewModel);
-              if (upload) {
-                filesToRemove.Add(file);
-              }
-            }
+        foreach (var file in tempList) {
+          var fileSumOnDisk = file.FilePath.FileCheckSum();
+          var fileSumOnDownload = file.FileSumOnDownload;
+
+          if (fileSumOnDisk.Equals(fileSumOnDownload)) continue;
+          var upload = await Upload(file.FilePath, WindowHelper.MainWindowViewModel);
+          if (upload) {
+            filesToRemove.Add(file);
           }
+        }
 
+        if (filesToRemove.Count > 0) {
           foreach (var file in filesToRemove) {
             WindowHelper.MainWindowViewModel.DownloadedFiles.Remove(file);
           }
           return true;
         }
-
-        else {
-          await NotificationHelper.ShowNotificationAsync("No file has been downloaded yet.",
-            WindowHelper.MainWindowViewModel!);
-          return false;
-        }
       }
-    }
-    else {
-      await NotificationHelper.ShowNotificationAsync("Download something first.", WindowHelper.MainWindowViewModel!);
+
+      WindowHelper.MainWindowViewModel.Status = FeedbackHelper.FileNotEdited;
+      await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel.Status, WindowHelper.MainWindowViewModel);
       return false;
     }
+
+    WindowHelper.MainWindowViewModel!.Status = FeedbackHelper.NoDownloads;
+    await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel.Status, WindowHelper.MainWindowViewModel);
+    return false;
   }
 
   public async Task<bool> Upload(string filePath, MainWindowViewModel mainView) {
@@ -96,30 +92,33 @@ internal class UploadService : IUploadService {
           mainView.FileUpDownProgressText = $"Uploaded {currentProgress} out of {fileSize}.";
           mainView.Status = mainView.FileUpDownProgressText;
           mainView.FileUpDownProgress = prog.Percentage;
+          if (prog.BytesRead >= new FileInfo(filePath).Length) {
+            mainView.Status = FeedbackHelper.UploadSuccessful;
+          }
         });
 
         var response = await mainView._httpClient.PostWithProgressAsync(ApiHelper.UploadUrl(mainView.AuthToken),
           content, progress, isUpload: true);
 
         if (response.IsSuccessStatusCode) {
-          mainView.Status = "File uploaded successfully.";
-          await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+          mainView.Status = FeedbackHelper.UploadSuccessful;
+          await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel?.Status!, mainView);
           return true;
         }
         else {
-          mainView.Status = "Upload failed.";
-          await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+          mainView.Status = FeedbackHelper.UploadFail;
+          await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel?.Status!, mainView);
           return false;
         }
       }
 
-      mainView.Status = "File path is invalid or file does not exist.";
-      await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+      mainView.Status = FeedbackHelper.FileAccessError;
+      await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel?.Status!, mainView);
       return false;
     }
     catch (Exception) {
-      mainView.Status = "An error occurred during upload.";
-      await NotificationHelper.ShowNotificationAsync(mainView.Status, mainView);
+      mainView.Status = FeedbackHelper.UploadFail;
+      await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel?.Status!, mainView);
       return false;
     }
   }

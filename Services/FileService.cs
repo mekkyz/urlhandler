@@ -36,8 +36,8 @@ internal class FileService : IFileService {
 
       var random = new Random(2345);
 
-      if (WindowHelper.MainWindowViewModel.DownloadedFiles != null) {
-        var id = WindowHelper.MainWindowViewModel?.DownloadedFiles.Any() ?? false
+      {
+        var id = WindowHelper.MainWindowViewModel.DownloadedFiles?.Any() ?? false
           ? WindowHelper.MainWindowViewModel.DownloadedFiles.Max(f => f.FileId) + 1
           : random.NextInt64(10000, 999999);
 
@@ -52,10 +52,10 @@ internal class FileService : IFileService {
         };
 
         File.SetCreationTime(filePath, DateTime.Now);
-        WindowHelper.MainWindowViewModel?.DownloadedFiles.Add(download);
+        WindowHelper.MainWindowViewModel.DownloadedFiles?.Add(download);
       }
 
-      WindowHelper.MainWindowViewModel!.HasFilesDownloaded = mainWindowView.DownloadedFiles.Count > 0;
+      WindowHelper.MainWindowViewModel.HasFilesDownloaded = mainWindowView.DownloadedFiles.Count > 0;
     }
     catch (Exception ex) {
       Console.WriteLine($"Error processing file: {ex.Message}");

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using urlhandler.Extensions;
 using urlhandler.Helpers;
 using urlhandler.Models;
@@ -21,30 +19,22 @@ internal class DownloadService : IDownloadService {
   public async Task<string?> DownloadFile(MainWindowViewModel mainWindowView, string authToken = "") {
     try {
 
-      var token = authToken.Length < 1 ? mainWindowView.Url[(mainWindowView.Url.LastIndexOf('/') + 1)..] : authToken;
+      var token = authToken.Length < 1 ? mainWindowView.Url![(mainWindowView.Url!.LastIndexOf('/') + 1)..] : authToken;
       mainWindowView.AuthToken = token;
-      var url = new Uri(mainWindowView.Url);
+      var url = new Uri(mainWindowView.Url!);
       ApiHelper.apiHost = $"{url.Scheme}://{url.Host}";
-      /* test if token is valid or expired
-      var handler = new JwtSecurityTokenHandler();
-      var isValid = JwtValidationHelper.IsTokenValid(token);*/
       var downloadUrl = ApiHelper.DownloadUrl(token);
-      #region Get new token, use it when an oven fresh token is needed!
-      /*#if DEBUG
-      await _tokenService.FetchAuthToken(mainWindowView);
-      var dummy = "Array.Empty<String;";
-      #endif*/
-      #endregion
-      mainWindowView.Status = "Downloading File...";
-      await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+      mainWindowView.Status = FeedbackHelper.Downloading;
       var progress = new Progress<ProgressInfo>(progressInfo => {
-        Dispatcher.UIThread.Invoke(() => {
-          mainWindowView.FileUpDownProgressText =
-            $"Downloaded {progressInfo.BytesRead.FormatBytes()} out of {progressInfo.TotalBytesExpected?.FormatBytes() ?? "0"}.";
-          mainWindowView.FileUpDownProgress = progressInfo.Percentage;
-          mainWindowView.Status = mainWindowView.FileUpDownProgressText;
-        });
+        mainWindowView.Status =
+          $"Downloaded {progressInfo.BytesRead.FormatBytes()} out of {progressInfo.TotalBytesExpected?.FormatBytes() ?? "0"}.";
+        if (progressInfo.BytesRead >= progressInfo.TotalBytesExpected) {
+          if (mainWindowView._filePath == "Already Exists!") {
+            mainWindowView.Status = FeedbackHelper.AlreadyExists;
+          }
+        }
       });
+
       var (response, fileContentBytes) = await mainWindowView._httpClient.GetWithProgressAsync(downloadUrl, progress);
       var headers = response.Content.Headers;
 
@@ -54,8 +44,8 @@ internal class DownloadService : IDownloadService {
       if (!response.IsSuccessStatusCode ||
           contentDisposition == null ||
           !contentDisposition.Contains("filename")) {
-        mainWindowView.Status = "Failed to download file.";
-        await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+        mainWindowView.Status = FeedbackHelper.DownloadFail;
+        await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
 
         return null;
       }
@@ -64,7 +54,6 @@ internal class DownloadService : IDownloadService {
       var filePath = Path.Combine(Path.GetTempPath(), fileName);
       var existingDownload = WindowHelper.MainWindowViewModel?.DownloadedFiles.FirstOrDefault(x => x.FilePath == filePath);
       if (existingDownload != null) {
-        await NotificationHelper.ShowNotificationAsync("Same file or or same file name already being processed.", mainWindowView);
         return "Already Exists!";
       }
 
@@ -73,11 +62,9 @@ internal class DownloadService : IDownloadService {
       return filePath;
     }
     catch (Exception ex) {
-      var errorMessage = ex is IOException ?
-        $"File access error: {ex.Message} - The file might be in use by another process or locked." :
-        $"An error occurred: {ex.Message}";
+      var errorMessage = ex is IOException ? FeedbackHelper.FileAccessError : FeedbackHelper.UnExpectedError;
       mainWindowView.Status = errorMessage;
-      await NotificationHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+      await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
       return null;
     }
   }

@@ -1,6 +1,6 @@
 root = true
 
-[*.{cs,cshtml,aspx,ascx,js,json,html,css,scss,md,yaml,yml}]
+[*.{cs,cshtml,aspx,ascx,js,json,html,css,scss,md,yaml,yml,xml,xaml,axaml}]
 indent_style = space
 indent_size = 2
 insert_final_newline = true
@@ -13,3 +13,8 @@ space_around_operators = true
 csharp_new_line_before_open_brace = none
 csharp_indent_case_contents = true
 csharp_language_version = latest
+
+[*.{xml,xaml,axaml}]
+xml.attribute.new_line = true
+xml.attribute.space_around_equal = true
+xml.element.new_line = true

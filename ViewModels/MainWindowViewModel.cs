@@ -45,7 +45,7 @@ public partial class
   [ObservableProperty] bool _hasFilesDownloaded;
   [ObservableProperty] private double _fileUpDownProgress;
   [ObservableProperty] string? _fileUpDownProgressText = "";
-  [ObservableProperty] string _url = "";
+  [ObservableProperty] private string? _url;
   [ObservableProperty] string? _status = "";
   [ObservableProperty] ObservableCollection<string> _history = new ObservableCollection<string>();
   [ObservableProperty] bool _hasHistory;
@@ -124,20 +124,18 @@ public partial class
 
   [RelayCommand]
   public void OnDownloadDoubleTapped(TappedEventArgs e) {
-    if (DownloadedFiles.Count > 0) {
-      if (SelectedDownloadedFileIndex > -1) {
-        var filePath = DownloadedFiles[SelectedDownloadedFileIndex].FilePath;
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo(filePath) {
-          UseShellExecute = true
-        };
-        process.Start();
-      }
-    }
+    if (DownloadedFiles.Count <= 0) return;
+    if (SelectedDownloadedFileIndex <= -1) return;
+    var filePath = DownloadedFiles[SelectedDownloadedFileIndex].FilePath;
+    using var process = new Process();
+    process.StartInfo = new ProcessStartInfo(filePath) {
+      UseShellExecute = true
+    };
+    process.Start();
   }
 
   public RelayCommand<Task> Process;
-  public async Task ProcessCommand() => await ProcessHelper.HandleProcess(this);
+  public async Task ProcessCommand() => await ProcessHelper.HandleProcess(this, Url!);
 
   [RelayCommand]
   public async Task<bool> UploadFiles() => await new UploadService().UploadEditedFiles();

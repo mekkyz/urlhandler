@@ -34,14 +34,15 @@ internal class HistoryService : IHistoryService {
 
   public void AddHistory(MainWindowViewModel mainWindowView, string url) {
     try {
+      var timestampedUrl = $"{DateTime.Now}|" + url;
       // load History from .txt file if exists
-      mainWindowView.History.Insert(0, $"{DateTime.Now.ToString()}|" + url);
+      mainWindowView.History.Insert(0, timestampedUrl);
       var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
       if (File.Exists(historyFilePath)) {
-        File.AppendAllLines(historyFilePath, new[] { $"{DateTime.Now.ToString()}|" + url });
+        File.AppendAllLines(historyFilePath, new[] { timestampedUrl });
       }
       else {
-        File.WriteAllLines(historyFilePath, new[] { $"{DateTime.Now.ToString()}|" + url });
+        File.WriteAllLines(historyFilePath, new[] { timestampedUrl });
       }
 
       mainWindowView.HasHistory = mainWindowView.History.Any();
@@ -82,17 +83,22 @@ internal class HistoryService : IHistoryService {
   public void IndexChange(MainWindowViewModel mainWindowView, int val) {
     try {
       if (mainWindowView.HasHistory) {
-        if (val >= 0 && val < mainWindowView.History.Count) {
-          mainWindowView.Url = mainWindowView.History[val].Substring(mainWindowView.History[val].IndexOf('|') + 1);
+        if (mainWindowView.History.Count > val && val >= 0) {
+          var selectedHistoryItem = mainWindowView.History[val];
+          mainWindowView.Url = selectedHistoryItem.Substring(selectedHistoryItem.IndexOf('|') + 1);
+          mainWindowView.SelectedHistoryIndex = val;
+        }
+        else if (val < 0) {
+          mainWindowView.Url = mainWindowView.History[0].Substring(mainWindowView.History[0].IndexOf('|') + 1);
+          mainWindowView.SelectedHistoryIndex = 0;
         }
         else {
-          throw new IndexOutOfRangeException("Selected history index is out of range.");
+          Console.WriteLine("Selected history index is out of range.");
         }
       }
     }
-
     catch (Exception ex) {
-      Console.WriteLine($"Error in OnSelectedHistoryIndexChanged: {ex.Message}");
+      Console.WriteLine($"Error in IndexChange: {ex.Message}");
     }
   }
 }

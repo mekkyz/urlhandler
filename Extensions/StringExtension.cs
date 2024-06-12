@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Web;
 
 namespace urlhandler.Extensions;
 
@@ -25,5 +26,25 @@ public static class StringExtension {
     using var sha256 = SHA256.Create();
     var checksum = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", "").ToLower();
     return checksum;
+  }
+
+  public static string? ParseUrl(this string inputUrl) {
+    try {
+      var uri = new Uri(inputUrl);
+      var parse = HttpUtility.ParseQueryString(uri.Query).Get("url");
+
+      return HttpUtility.UrlDecode(parse);
+    }
+    catch (Exception) {
+      return "invalid uri";
+    }
+  }
+
+  public static string? ExtractAuthToken(this string decodedUrl) {
+    var lastSlashIndex = decodedUrl.LastIndexOf('/');
+    if (lastSlashIndex < 0 || lastSlashIndex == decodedUrl.Length - 1) {
+      return null;
+    }
+    return decodedUrl[(lastSlashIndex + 1)..];
   }
 }
