@@ -5,10 +5,10 @@
 URL Handler is a cross-platform application designed to manage and process URLs specifically tailored for Chemotion interfaces, improving handling and interaction within chemical databases.
 
 ## Key Features
-- **Custom URL Schemes**: Handles specific URL patterns to integrate with Chemotion projects.
+- **Custom URL Schemes**: Handles specific URL pattern to react with Chemotion.
 - **History Management**: Maintains a history of processed URLs for easy access and management.
-- **File Handling**: Supports downloading and uploading files as dictated by URL commands.
-- **Notifications**: Integrated system tray notifications to alert users about the status of their tasks.
+- **File Handling**: Supports downloading, editing and uploading files.
+- **Notifications**: Integrated system tray and app window notifications to alert users about the status of their tasks.
 
 ## Getting Started
 
