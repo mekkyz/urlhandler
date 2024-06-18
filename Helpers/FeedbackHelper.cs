@@ -40,7 +40,7 @@ public static class FeedbackHelper {
                 { InvalidUrl, "Ensure the URL matches the expected pattern." },
                 { Minimize, "Minimized due to inactivity." },
                 { NetworkError, "Please check your connection or contact support if the problem persists." },
-                { NoDownloads, "There are downloaded files at the moment." },
+                { NoDownloads, "There are no downloaded files at the moment." },
                 { UploadFail, "URL is expired. You have to download it again using a new link." },
                 { UnExpectedError, "Unexpected behavior, please report." }
             };
