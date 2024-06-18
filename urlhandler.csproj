@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -9,6 +8,9 @@
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <IsPackable>false</IsPackable>
     <LangVersion>latestmajor</LangVersion>
+    <!-- Set target framework based on OS -->
+    <TargetFramework Condition="'$(OS)' == 'Windows_NT'">net8.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework Condition="'$(OS)' != 'Windows_NT'">net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\"/>

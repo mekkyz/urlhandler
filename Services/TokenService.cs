@@ -24,12 +24,10 @@ internal class TokenService : ITokenService {
             mainWindowView.AuthToken = content;
           }
           else {
-            // handle invalid token format
             throw new InvalidOperationException("Failed to parse auth token from response content.");
           }
         }
         else {
-          // handle unsuccessful HTTP response
           throw new HttpRequestException($"Failed to fetch auth token. Status code: {response.StatusCode}");
         }
       }

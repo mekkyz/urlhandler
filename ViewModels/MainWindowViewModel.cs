@@ -36,10 +36,7 @@ public partial class
   internal readonly FileService _fileService;
   internal Process? _fileProcess;
 
-  [ObservableProperty]
-  [NotifyPropertyChangedFor(nameof(HasFilesDownloaded))]
-  ObservableCollection<Downloads> _downloadedFiles = [];
-
+  [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] ObservableCollection<Downloads> _downloadedFiles = [];
   [ObservableProperty] private ObservableCollection<float> _editedFileIds = [];
   [ObservableProperty] int _selectedDownloadedFileIndex = -1;
   [ObservableProperty] bool _hasFilesDownloaded;
