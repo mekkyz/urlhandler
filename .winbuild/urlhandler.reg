@@ -1,11 +1,11 @@
 Windows Registry Editor Version 5.00
 
-[HKEY_CLASSES_ROOT\localhost]
-@="URL:Localhost Protocol"
+[HKEY_CLASSES_ROOT\chemotion]
+@="Chemotion"
 "URL Protocol"=""
-[HKEY_CLASSES_ROOT\localhost\DefaultIcon]
-@="\"C:\\Users\\kg2527\\Work\\urlhandler\\icon.ico\""
-[HKEY_CLASSES_ROOT\localhost\shell]
-[HKEY_CLASSES_ROOT\localhost\shell\open]
-[HKEY_CLASSES_ROOT\localhost\shell\open\command]
-@="\"C:\\Users\\kg2527\\Work\\urlhandler\\bin\\Release\\net6.0-windows10.0.17763.0\\win-x64\\publish\\urlhandler.exe\" \"%1\""
+[HKEY_CLASSES_ROOT\chemotion\DefaultIcon]
+@="\"C:\\LINK\\LINK\\Desktop\\urlhandler\\icon.ico\""
+[HKEY_CLASSES_ROOT\chemotion\shell]
+[HKEY_CLASSES_ROOT\chemotion\shell\open]
+[HKEY_CLASSES_ROOT\chemotion\shell\open\command]
+@="\"C:\\LINK\\LINK\\LINK\\urlhandler\\bin\\Release\\net8.0-windows10.0.17763.0\\win-x64\\publish\\URL Handler.exe\" \"%1\""

@@ -13,8 +13,14 @@ internal interface IHistoryService {
 }
 
 internal class HistoryService : IHistoryService {
+  private string GetHistoryFilePath() {
+    var historyFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+    Directory.CreateDirectory(historyFolder);
+    return Path.Combine(historyFolder, "history.txt");
+  }
+
   public void LoadHistory(MainWindowViewModel mainWindowView) {
-    var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
+    var historyFilePath = GetHistoryFilePath();
     if (File.Exists(historyFilePath)) {
       var lines = File.ReadAllLines(historyFilePath);
       if (lines.Length > 0) {
@@ -35,9 +41,8 @@ internal class HistoryService : IHistoryService {
   public void AddHistory(MainWindowViewModel mainWindowView, string url) {
     try {
       var timestampedUrl = $"{DateTime.Now}|" + url;
-      // load History from .txt file if exists
       mainWindowView.History.Insert(0, timestampedUrl);
-      var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
+      var historyFilePath = GetHistoryFilePath();
       if (File.Exists(historyFilePath)) {
         File.AppendAllLines(historyFilePath, new[] { timestampedUrl });
       }
@@ -55,7 +60,7 @@ internal class HistoryService : IHistoryService {
 
   public void DeleteHistory(MainWindowViewModel mainWindowView) {
     try {
-      var historyFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "history.txt");
+      var historyFilePath = GetHistoryFilePath();
 
       if (mainWindowView.SelectedHistoryIndex > -1 && mainWindowView.SelectedHistoryIndex < mainWindowView.History.Count) {
         mainWindowView.History.RemoveAt(mainWindowView.SelectedHistoryIndex);
