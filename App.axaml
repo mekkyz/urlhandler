@@ -2,10 +2,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="urlhandler.App"
              xmlns:local="using:urlhandler"
-             RequestedThemeVariant="Dark">
-    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:behaviors="clr-namespace:urlhandler.Behaviors"
+             RequestedThemeVariant="Default">
+  <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
+        <Style Selector="Button:disabled">
+          <Setter Property="Template">
+            <ControlTemplate>
+
+              <ContentControl Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              Padding="{TemplateBinding Padding}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                              ToolTip.Tip="Only enabled when a file is selected!"
+                              IsEnabled="False"
+                              behaviors:ShowDisabledTooltipExtension.ShowOnDisabled="True"
+                              Foreground="Gray"/>
+            </ControlTemplate>
+          </Setter>
+        </Style>
         <FluentTheme>
             <FluentTheme.Palettes>
                 <ColorPaletteResources x:Key="Light" Accent="#ff00579c" AltHigh="White" AltLow="White"
