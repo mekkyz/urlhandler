@@ -33,8 +33,8 @@ public static class ShowDisabledTooltipExtension {
 
   private static void HandleShowOnDisabledChanged(Control control, AvaloniaPropertyChangedEventArgs e) {
     if (e.NewValue is bool isEnabledVal && isEnabledVal) {
-      control.DetachedFromVisualTree += AttachedControl_DetachedFromVisualOrExtension;
-      control.AttachedToVisualTree += AttachedControl_AttachedToVisualTree;
+      control.DetachedFromVisualTree += AttachedControl_DetachedFromVisualOrExtension!;
+      control.AttachedToVisualTree += AttachedControl_AttachedToVisualTree!;
       if (control.IsInitialized) {
         // enabled after visual attached
         AttachedControl_AttachedToVisualTree(control, null);
@@ -46,26 +46,26 @@ public static class ShowDisabledTooltipExtension {
 
   }
 
-  private static void AttachedControl_AttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs e) {
+  private static void AttachedControl_AttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs? e) {
     if (sender is not Control control) {
       return;
     }
     var tl = TopLevel.GetTopLevel(control);
     // NOTE pointermove needed to be tunneled for me but you may not need to...
-    tl.AddHandler(TopLevel.PointerMovedEvent, TopLevel_PointerMoved, RoutingStrategies.Tunnel);
+    tl!.AddHandler(TopLevel.PointerMovedEvent, TopLevel_PointerMoved!, RoutingStrategies.Tunnel);
   }
 
 
-  private static void AttachedControl_DetachedFromVisualOrExtension(object s, VisualTreeAttachmentEventArgs e) {
+  private static void AttachedControl_DetachedFromVisualOrExtension(object s, VisualTreeAttachmentEventArgs? e) {
     if (s is not Control control) {
       return;
     }
-    control.DetachedFromVisualTree -= AttachedControl_DetachedFromVisualOrExtension;
-    control.AttachedToVisualTree -= AttachedControl_AttachedToVisualTree;
+    control.DetachedFromVisualTree -= AttachedControl_DetachedFromVisualOrExtension!;
+    control.AttachedToVisualTree -= AttachedControl_AttachedToVisualTree!;
     if (TopLevel.GetTopLevel(control) is not TopLevel tl) {
       return;
     }
-    tl.RemoveHandler(TopLevel.PointerMovedEvent, TopLevel_PointerMoved);
+    tl.RemoveHandler(TopLevel.PointerMovedEvent, TopLevel_PointerMoved!);
   }
 
   private static void TopLevel_PointerMoved(object sender, global::Avalonia.Input.PointerEventArgs e) {
