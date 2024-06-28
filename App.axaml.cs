@@ -1,4 +1,6 @@
-﻿using Avalonia;
+﻿using System;
+using System.Diagnostics;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using urlhandler.Helpers;
@@ -7,7 +9,7 @@ using urlhandler.ViewModels;
 
 namespace urlhandler;
 
-public partial class App : Application {
+public class App : Application {
   public override void Initialize() {
     AvaloniaXamlLoader.Load(this);
   }
@@ -17,11 +19,30 @@ public partial class App : Application {
       var mw = new MainWindow();
       WindowHelper.MainWindowViewModel = new MainWindowViewModel(mw, desktop.Args ?? []);
       mw.DataContext = WindowHelper.MainWindowViewModel;
+      desktop.Startup += DesktopOnStartup;
       desktop.MainWindow = mw;
       desktop.MainWindow.DataContext = mw.DataContext;
       WindowHelper.MainWindow = mw;
     }
 
     base.OnFrameworkInitializationCompleted();
+  }
+
+  private void DesktopOnStartup(object? sender, ControlledApplicationLifetimeStartupEventArgs e) {
+    var currentProcess = Process.GetCurrentProcess();
+    if (Process.GetProcessesByName("urlhandler").Length > 0) {
+      var processes = Process.GetProcessesByName("urlhandler");
+      foreach (Process process in processes) {
+        if (process.Id != currentProcess.Id) {
+          try {
+            process.Kill();
+          }
+
+          catch (Exception) {
+            // ignored
+          }
+        }
+      }
+    }
   }
 }
