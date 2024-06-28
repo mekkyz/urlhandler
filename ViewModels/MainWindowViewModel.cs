@@ -56,17 +56,13 @@ public partial class
     ThemeButtonIcon = value ? "fa-solid fa-lightbulb" : "fa-regular fa-lightbulb";
     ThemeToolTip = value ? "Switch to Light Mode" : "Switch to Dark Mode";
     Application.Current!.RequestedThemeVariant = value ? ThemeVariant.Dark : ThemeVariant.Light;
+    Theme.SaveCurrentTheme(value);
   }
 
   public MainWindowViewModel(MainWindow mainWindow, string[] args) {
     this.mainWindow = mainWindow;
-#if DEBUG
-    this.args = new[] {
-      "chemotion://?url=https%3A%2F%2Funcharted.chemotion.ibcs.kit.edu%2Fapi%2Fv1%2Fpublic%2Fthird_party_apps%2FeyJhbGciOiJIUzI1NiJ9.eyJhcHBJRCI6MCwidXNlcklEIjo1LCJhdHRJRCI6MTU2NTksImV4cCI6MTcxOTY5MDI1NH0.e0_3EeYYdFmL-9hO8iS4iTWT3KmgnF-2Wxu2C18LVfw"
-    };
-#else
+    IsDarkMode = Theme.LoadCurrentTheme();
     this.args = args ?? throw new ArgumentNullException(nameof(args));
-#endif
 
     _downloadService = new DownloadService();
     _uploadService = new UploadService();
