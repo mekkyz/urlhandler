@@ -33,13 +33,12 @@ internal class FileService : IFileService {
 
       WindowHelper.MainWindowViewModel._fileProcess.Start();
 
-
       var random = new Random(2345);
 
       {
         var id = WindowHelper.MainWindowViewModel.DownloadedFiles?.Any() ?? false
-          ? WindowHelper.MainWindowViewModel.DownloadedFiles.Max(f => f.FileId) + 1
-          : random.NextInt64(10000, 999999);
+            ? WindowHelper.MainWindowViewModel.DownloadedFiles.Max(f => f.FileId) + 1
+            : random.NextInt64(10000, 999999);
 
         var download = new Downloads() {
           FileId = id,
@@ -53,7 +52,9 @@ internal class FileService : IFileService {
 
         File.SetCreationTime(filePath, DateTime.Now);
 
-        var path = $"{AppDomain.CurrentDomain.BaseDirectory}downloads.json";
+        var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+        Directory.CreateDirectory(appDataPath);
+        var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
 
         var jsonObject = new {
           FileId = id,
@@ -65,8 +66,7 @@ internal class FileService : IFileService {
           IsEdited = false
         };
 
-
-        JsonHelper.AppendJsonToFile(path, jsonObject);
+        JsonHelper.AppendJsonToFile(jsonFilePath, jsonObject);
 
         WindowHelper.MainWindowViewModel.DownloadedFiles?.Insert(0, download);
       }
@@ -79,5 +79,4 @@ internal class FileService : IFileService {
 
     return Task.CompletedTask;
   }
-
 }

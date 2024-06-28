@@ -22,7 +22,7 @@ internal class UploadService : IUploadService {
     if (WindowHelper.MainWindowViewModel?.DownloadedFiles.Count > 0) {
       if (WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex > -1) {
         var file = WindowHelper.MainWindowViewModel.DownloadedFiles[
-          WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex];
+            WindowHelper.MainWindowViewModel.SelectedDownloadedFileIndex];
         var fileSumOnDisk = file.FilePath.FileCheckSum();
         var fileSumOnDownload = file.FileSumOnDownload;
 
@@ -30,17 +30,16 @@ internal class UploadService : IUploadService {
           var upload = await Upload(file.FilePath, WindowHelper.MainWindowViewModel);
           if (!upload) return false;
           WindowHelper.MainWindowViewModel.DownloadedFiles.RemoveAt(WindowHelper.MainWindowViewModel
-            .SelectedDownloadedFileIndex);
+              .SelectedDownloadedFileIndex);
           Debug.WriteLine(WindowHelper.MainWindowViewModel.DownloadedFiles.Count);
           return true;
-
         }
 
         WindowHelper.MainWindowViewModel.Status = FeedbackHelper.FileNotEdited;
         await FeedbackHelper.ShowNotificationAsync(WindowHelper.MainWindowViewModel.Status, WindowHelper.MainWindowViewModel);
         return false;
       }
-
+      
       {
         var tempList = WindowHelper.MainWindowViewModel.DownloadedFiles.ToList();
         var filesToRemove = new ObservableCollection<Downloads>();
@@ -60,10 +59,12 @@ internal class UploadService : IUploadService {
           foreach (var file in filesToRemove) {
             WindowHelper.MainWindowViewModel.DownloadedFiles.Remove(file);
           }
-          var path = $"{AppDomain.CurrentDomain.BaseDirectory}downloads.json";
+          var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+          Directory.CreateDirectory(appDataPath);
+          var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
 
           var data = JsonConvert.SerializeObject(WindowHelper.MainWindowViewModel.DownloadedFiles);
-          await File.WriteAllTextAsync(path, data);
+          await File.WriteAllTextAsync(jsonFilePath, data);
           return true;
         }
       }
@@ -84,16 +85,16 @@ internal class UploadService : IUploadService {
         byte[] fileContentBytes = await File.ReadAllBytesAsync(filePath);
 
         var content = new MultipartFormDataContent {
-          { new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath) }
-        };
+                    { new ByteArrayContent(fileContentBytes), "file", Path.GetFileName(filePath) }
+                };
         var fileName = new FileInfo(filePath).Name;
         content.Add(new StringContent(fileName), "attachmentName");
 
         var fileSize = new FileInfo(filePath).Length.FormatBytes();
         var progress = new Progress<ProgressInfo>(prog => {
           var currentProgress = prog.BytesRead > new FileInfo(filePath).Length
-            ? fileSize
-            : prog.BytesRead.FormatBytes();
+              ? fileSize
+              : prog.BytesRead.FormatBytes();
           mainView.FileUpDownProgressText = $"Uploaded {currentProgress} out of {fileSize}.";
           mainView.Status = mainView.FileUpDownProgressText;
           mainView.FileUpDownProgress = prog.Percentage;
@@ -103,7 +104,7 @@ internal class UploadService : IUploadService {
         });
 
         var response = await mainView._httpClient.PostWithProgressAsync(ApiHelper.UploadUrl(mainView.AuthToken),
-          content, progress, isUpload: true);
+            content, progress, isUpload: true);
 
         if (response.IsSuccessStatusCode) {
           mainView.Status = FeedbackHelper.UploadSuccessful;

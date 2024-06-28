@@ -40,9 +40,14 @@ public static class WindowHelper {
     Task.Run(async () => {
       try {
         if (mainWindowView.args.Length > 0) {
-          var path = AppDomain.CurrentDomain.BaseDirectory + "downloads.json";
-          if (File.Exists(path) && !string.IsNullOrEmpty(File.ReadAllText(path))) {
-            var data = File.ReadAllText(path);
+          var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+          Directory.CreateDirectory(appDataPath);
+          var filePath = Path.Combine(appDataPath, "downloads.json");
+          Console.WriteLine($"Checking for file at path: {filePath}");
+
+          if (File.Exists(filePath) && !string.IsNullOrEmpty(File.ReadAllText(filePath))) {
+            Console.WriteLine("File exists and is not empty");
+            var data = File.ReadAllText(filePath);
             var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
 
             if (downloads.Count > 0) {
@@ -53,6 +58,9 @@ public static class WindowHelper {
               }
               mainWindowView.HasFilesDownloaded = true;
             }
+          }
+          else {
+            Console.WriteLine("File does not exist or is empty");
           }
 
           var parsedUrl = mainWindowView.args.First().ParseUrl();
@@ -74,7 +82,7 @@ public static class WindowHelper {
         }
       }
       catch (Exception ex) {
-        Debug.WriteLine(ex.Message);
+        Console.WriteLine($"Exception in Load method: {ex.Message}");
       }
     });
     MinimizeWindowOnIdle();

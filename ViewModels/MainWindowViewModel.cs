@@ -140,10 +140,12 @@ public partial class
       if (File.Exists(DownloadedFiles[SelectedDownloadedFileIndex].FilePath))
         File.Delete(DownloadedFiles[SelectedDownloadedFileIndex].FilePath);
       DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
-      var path = AppDomain.CurrentDomain.BaseDirectory + "downloads.json";
-      if (!File.Exists(path) || string.IsNullOrEmpty(File.ReadAllText(path))) return;
+      var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+      Directory.CreateDirectory(appDataPath);
+      var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
+      if (!File.Exists(jsonFilePath) || string.IsNullOrEmpty(File.ReadAllText(jsonFilePath))) return;
       var data = JsonConvert.SerializeObject(DownloadedFiles);
-      File.WriteAllText(path, data);
+      File.WriteAllText(jsonFilePath, data);
       HasFilesDownloaded = DownloadedFiles.Count >= 1;
     }
   }
