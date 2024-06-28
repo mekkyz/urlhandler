@@ -52,7 +52,23 @@ internal class FileService : IFileService {
         };
 
         File.SetCreationTime(filePath, DateTime.Now);
-        WindowHelper.MainWindowViewModel.DownloadedFiles?.Add(download);
+
+        var path = $"{AppDomain.CurrentDomain.BaseDirectory}downloads.json";
+
+        var jsonObject = new {
+          FileId = id,
+          FileName = Path.GetFileName(filePath),
+          FilePath = filePath,
+          FileSumOnDownload = filePath.FileCheckSum(),
+          FileSize = new FileInfo(filePath).Length.FormatBytes(),
+          FileDownloadTimeStamp = File.GetLastWriteTime(filePath),
+          IsEdited = false
+        };
+
+
+        JsonHelper.AppendJsonToFile(path, jsonObject);
+
+        WindowHelper.MainWindowViewModel.DownloadedFiles?.Insert(0, download);
       }
 
       WindowHelper.MainWindowViewModel.HasFilesDownloaded = mainWindowView.DownloadedFiles.Count > 0;

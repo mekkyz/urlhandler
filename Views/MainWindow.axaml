@@ -4,23 +4,23 @@
         Title="URL Handler"
         Width="500"
         MinWidth="500"
-        Height="570"
-        MinHeight="600"
         SizeToContent="Height"
         x:DataType="viewModels:MainWindowViewModel"
         xmlns:system="using:System"
         Icon="/Assets/icon.ico"
+        xmlns:local="clr-namespace:urlhandler.Behaviors"
         xmlns:ia="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
         xmlns:i="https://github.com/projektanker/icons.avalonia"
         xmlns:viewModels="clr-namespace:urlhandler.ViewModels"
         xmlns:converters="clr-namespace:urlhandler.Converters"
-        xmlns:behaviors="clr-namespace:urlhandler.Behaviors"
         ExtendClientAreaToDecorationsHint="True"
-        WindowStartupLocation="Manual">
+        WindowStartupLocation="Manual"
+        SystemDecorations="Full"
+        Focusable="True">
     <Window.Resources>
-        <converters:HistoryDateConverter x:Key="dateConv" />
-        <converters:HistoryUrlConverter x:Key="urlConv" />
-        <system:Double x:Key="ListHeight">200</system:Double>
+      <converters:IndexToBooleanConverter x:Key="indextoBool"/>
+      <system:Double x:Key="ListHeight">250</system:Double>
+
     </Window.Resources>
 
     <StackPanel>
@@ -29,83 +29,51 @@
                       Height="32"
                       Width="32"
                       Padding="4"
-                      CornerRadius="32">
-            <i:Icon Value="{Binding ThemeButtonIcon}" HorizontalAlignment="Center"
-                    VerticalAlignment="Center" />
+                      CornerRadius="32"
+                      ToolTip.Tip="{Binding ThemeToolTip}">
+          <i:Icon Value="{Binding ThemeButtonIcon}" HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
         </ToggleButton>
         <StackPanel Margin="20,0,20,10" Spacing="20">
             <Image HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Source="/Assets/logo.png" Height="130" />
             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Spacing="5">
-                <TextBlock Text="Enter URL" FontWeight="Medium" FontSize="18" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox x:Name="UriBox"
-                             Text="{Binding Url}"
-                             CornerRadius="8"
-                             Margin="0,5"
-                             BorderThickness="2"
-                             BorderBrush="#d0d0d0"
-                             Watermark="https://www.example.com/link/to/api/endpoint/{token}">
-                        <ia:Interaction.Behaviors>
-                            <behaviors:UrlBoxBehavior />
-                        </ia:Interaction.Behaviors>
-                    </TextBox>
-                    <Button Classes="ImageButton"
-                            Grid.Column="1"
-                            Command="{Binding ProcessCommand}"
-                            HorizontalAlignment="Stretch" Padding="10"
-                            Background="#ff00579c" Foreground="White"
-                            CornerRadius="8" BorderThickness="2"
-                            Margin="5,5,0,5"
-                            i:Attached.Icon="fa-solids fa-download" />
-                </Grid>
                 <TabControl>
-                    <TabItem Header="History" FontSize="20">
+                  <TabItem Header="Files" FontSize="20">
                         <ScrollViewer>
                             <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
-                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent"
-                                        BorderThickness="0" i:Attached.Icon="fa-solids fa-trash" Grid.Column="1"
-                                        Command="{Binding DeleteHistoryCommand}"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10" />
-                                <ListBox Grid.Row="1" Background="Transparent"
-                                         IsVisible="{Binding HasHistory}"
-                                         ItemsSource="{Binding History}"
-                                         SelectedIndex="{Binding SelectedHistoryIndex, Mode=TwoWay}"
-                                         Height="{StaticResource ListHeight}">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Spacing="3">
-                                                <Grid RowDefinitions="auto *">
+                              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                          Spacing="5"
+                                          IsVisible="{Binding HasFilesDownloaded}"
+                                          >
+                              <Button Background="Transparent" BorderBrush="Transparent"
+                                      BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
+                                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
+                                      Width="36" Height="36" FontSize="18"
+                                      Command="{Binding UploadFilesCommand}"
+                                      ToolTip.Tip="Upload edited file. If no file is selected, all the edited files will be uploaded."
+                                      />
 
-                                                    <TextBlock Text="{Binding ., Converter={StaticResource dateConv} }"
-                                                               FontWeight="Bold"
-                                                               HorizontalAlignment="Left" />
-                                                    <TextBlock Grid.Row="1"
-                                                               Text="{Binding ., Converter={StaticResource urlConv} }" />
-                                                </Grid>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.."
-                                           IsVisible="{Binding !HasHistory}" TextWrapping="Wrap"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium"
-                                           FontSize="18" />
-                            </Grid>
-                        </ScrollViewer>
-                    </TabItem>
-                    <TabItem Header="Downloaded" FontSize="20">
-                        <ScrollViewer>
-                            <Grid ScrollViewer.VerticalScrollBarVisibility="Visible" RowDefinitions="Auto,*">
-                                <Button Classes="ImageButton" Background="Transparent" BorderBrush="Transparent"
-                                        BorderThickness="0" i:Attached.Icon="fa-solids fa-upload" Grid.Column="1"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
-                                        Command="{Binding UploadFilesCommand}" />
+                              <Button Background="Transparent" BorderBrush="Transparent"
+                                      BorderThickness="0" i:Attached.Icon="fa-solids fa-trash" Grid.Column="1"
+                                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
+                                      Width="36" Height="36" FontSize="18"
+                                      Command="{Binding DeleteSelectedFileCommand}"
+                                      ToolTip.Tip="Delete file."
+                                      IsEnabled="{Binding SelectedDownloadedFileIndex, Converter={StaticResource indextoBool}}"
+                                      />
+
+                              <Button Background="Transparent" BorderBrush="Transparent"
+                                      BorderThickness="0" i:Attached.Icon="fa-regular fa-folder-open" Grid.Column="1"
+                                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
+                                      Width="36" Height="36" FontSize="18"
+                                      Command="{Binding OpenFileCommand}"
+                                      ToolTip.Tip="Open file."
+                                      IsEnabled="{Binding SelectedDownloadedFileIndex, Converter={StaticResource indextoBool}}"
+                                      />
+                              </StackPanel>
+
                                 <ListBox Grid.Row="1" Background="Transparent"
                                          ItemsSource="{Binding DownloadedFiles}"
                                          IsVisible="{Binding HasFilesDownloaded}"
@@ -134,12 +102,13 @@
                                                             ClipToBounds="True"
                                                             FontSize="10"
                                                             Text="Edited"
-                                                            Padding="4"/>
-                                                  
+                                                            Padding="4"
+                                                            Foreground="White"/>
+
                                                     </Border>
                                                     <TextBlock Text="{Binding FileSize}"
                                                                Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                                                    
+
                                                     <TextBlock Text="{Binding FileName}" FontWeight="Bold"
                                                                Grid.Column="0" VerticalAlignment="Center"/>
                                                     <TextBlock Grid.Row="1" FontWeight="SemiBold">
@@ -148,24 +117,32 @@
                                                     </TextBlock>
                                                     <TextBlock Text="{Binding FileDownloadTimeStamp}"
                                                                Grid.Column="1"
-                                                               Grid.Row="1" HorizontalAlignment="Right" 
+                                                               Grid.Row="1" HorizontalAlignment="Right"
                                                                Margin="20,0,0,0" />
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <TextBlock Grid.Row="1" Margin="5" Text="Nothing to show.. Do something.."
-                                           IsVisible="{Binding !HasFilesDownloaded}" TextWrapping="Wrap"
+                                <TextBlock Grid.Row="1" Margin="5, 20,5,5"
+                                           IsVisible="{Binding !HasFilesDownloaded}"
+                                           TextWrapping="Wrap"
+                                           LineSpacing="10"
+                                           TextAlignment="Center"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Medium"
-                                           FontSize="18" />
+                                           FontSize="18">
+                                  <Run>Nothing to show.. Do something..</Run>
+                                  <LineBreak/>
+                                  <Run>Download Chemotion Files Locally!</Run>
+                                </TextBlock>
                             </Grid>
                         </ScrollViewer>
                     </TabItem>
                 </TabControl>
             </StackPanel>
-            <TextBlock Grid.Column="1" Margin="10" Text="{Binding Status}" HorizontalAlignment="Right"
-                       VerticalAlignment="Bottom" FontWeight="SemiBold" />
         </StackPanel>
+      <TextBlock Grid.Column="1" Margin="10"
+                 Text="{Binding Status}" HorizontalAlignment="Right"
+                 VerticalAlignment="Bottom" FontWeight="SemiBold" />
     </StackPanel>
 </Window>

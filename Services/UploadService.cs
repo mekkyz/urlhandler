@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using urlhandler.Models;
 using urlhandler.ViewModels;
 using urlhandler.Extensions;
@@ -59,6 +60,10 @@ internal class UploadService : IUploadService {
           foreach (var file in filesToRemove) {
             WindowHelper.MainWindowViewModel.DownloadedFiles.Remove(file);
           }
+          var path = $"{AppDomain.CurrentDomain.BaseDirectory}downloads.json";
+
+          var data = JsonConvert.SerializeObject(WindowHelper.MainWindowViewModel.DownloadedFiles);
+          await File.WriteAllTextAsync(path, data);
           return true;
         }
       }

@@ -34,8 +34,6 @@ internal abstract class ProcessHelper {
 
         if (!string.IsNullOrEmpty(_url) && mainWindowView.Url != _url)
           mainWindowView.Url = _url;
-        mainWindowView.AddHistory(_url);
-        mainWindowView.SelectedHistoryIndex = -1;
         var token = _url.ExtractAuthToken();
         mainWindowView._filePath = await mainWindowView._downloadService.DownloadFile(mainWindowView, token!);
         if (mainWindowView._filePath == null) {

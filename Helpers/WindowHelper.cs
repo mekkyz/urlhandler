@@ -1,18 +1,23 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
+using Newtonsoft.Json;
 using urlhandler.Extensions;
+using urlhandler.Models;
 using urlhandler.Services;
 using urlhandler.ViewModels;
 using urlhandler.Views;
 
 namespace urlhandler.Helpers;
 
-public static partial class WindowHelper {
+public static class WindowHelper {
   public static MainWindowViewModel? MainWindowViewModel { get; set; }
   public static MainWindow? MainWindow { get; set; }
   public static void Deactivate(MainWindowViewModel mainWindowView) {
@@ -33,21 +38,43 @@ public static partial class WindowHelper {
     }
 
     Task.Run(async () => {
-      if (mainWindowView.args.Length > 0) {
-        var parsedUrl = mainWindowView.args.First().ParseUrl();
-        if (parsedUrl == null || parsedUrl == "invalid uri") {
-          mainWindowView.Status = FeedbackHelper.InvalidUrl;
-          await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-          return;
+      try {
+        if (mainWindowView.args.Length > 0) {
+          var path = AppDomain.CurrentDomain.BaseDirectory + "downloads.json";
+          if (File.Exists(path) && !string.IsNullOrEmpty(File.ReadAllText(path))) {
+            var data = File.ReadAllText(path);
+            var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
+
+            if (downloads.Count > 0) {
+              foreach (var download in downloads) {
+                if (File.Exists(download.FilePath)) {
+                  mainWindowView.DownloadedFiles.Insert(0, download);
+                }
+              }
+              mainWindowView.HasFilesDownloaded = true;
+            }
+          }
+
+          var parsedUrl = mainWindowView.args.First().ParseUrl();
+          if (parsedUrl == null || parsedUrl == "invalid uri") {
+            mainWindowView.Status = FeedbackHelper.InvalidUrl;
+            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+            return;
+          }
+
+          var authToken = parsedUrl.ExtractAuthToken();
+          if (authToken == null) {
+            mainWindowView.Status = FeedbackHelper.TokenFail;
+            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+            return;
+          }
+
+          mainWindowView.Url = parsedUrl;
+          await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
         }
-        var authToken = parsedUrl.ExtractAuthToken();
-        if (authToken == null) {
-          mainWindowView.Status = FeedbackHelper.TokenFail;
-          await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-          return;
-        }
-        mainWindowView.Url = parsedUrl;
-        await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
+      }
+      catch (Exception ex) {
+        Debug.WriteLine(ex.Message);
       }
     });
     MinimizeWindowOnIdle();
