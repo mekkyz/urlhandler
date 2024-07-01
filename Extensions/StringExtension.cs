@@ -7,7 +7,7 @@ namespace urlhandler.Extensions;
 
 public static class StringExtension {
   private const int scale = 1024;
-  private static readonly string[] orders = { "B", "KB", "MB", "GB", "TB" };
+  private static readonly string[] orders = { "B", "kB", "MB", "GB", "TB" };
 
   public static string FormatBytes(this long bytes) {
     int orderIndex = 0;
