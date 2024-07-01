@@ -59,22 +59,6 @@ public partial class
     Theme.SaveCurrentTheme(value);
   }
 
-  private void LoadDownloadedFiles() {
-    var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
-    var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
-
-    if (File.Exists(jsonFilePath)) {
-      var jsonData = File.ReadAllText(jsonFilePath);
-      var downloadedFiles = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(jsonData);
-
-      if (downloadedFiles != null) {
-        DownloadedFiles = downloadedFiles;
-      }
-    }
-
-    HasFilesDownloaded = DownloadedFiles.Count >= 1;
-  }
-
   public MainWindowViewModel(MainWindow mainWindow, string[] args) {
     this.mainWindow = mainWindow;
     IsDarkMode = Theme.LoadCurrentTheme();
@@ -85,7 +69,6 @@ public partial class
     _fileService = new FileService();
     Process = new RelayCommand<Task>(_ => Task.Run(async () => await ProcessCommand()));
     SetupEventHandlers();
-    LoadDownloadedFiles();
   }
 
   private void SetupEventHandlers() {

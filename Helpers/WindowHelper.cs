@@ -34,56 +34,56 @@ public static class WindowHelper {
     new TrayService().InitializeTray(mainWindowView);
     if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10 ||
         Environment.OSVersion.Platform == PlatformID.Unix) {
-      mainWindowView.notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
+        mainWindowView.notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
     }
 
     Task.Run(async () => {
-      try {
-        if (mainWindowView.args.Length > 0) {
-          var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
-          Directory.CreateDirectory(appDataPath);
-          var filePath = Path.Combine(appDataPath, "downloads.json");
-          Console.WriteLine($"Checking for file at path: {filePath}");
+        try {
+            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+            Directory.CreateDirectory(appDataPath);
+            var filePath = Path.Combine(appDataPath, "downloads.json");
+            Console.WriteLine($"Checking for file at path: {filePath}");
 
-          if (File.Exists(filePath) && !string.IsNullOrEmpty(File.ReadAllText(filePath))) {
-            Console.WriteLine("File exists and is not empty");
-            var data = File.ReadAllText(filePath);
-            var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
+            if (File.Exists(filePath) && !string.IsNullOrEmpty(File.ReadAllText(filePath))) {
+                Console.WriteLine("File exists and is not empty");
+                var data = File.ReadAllText(filePath);
+                var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
 
-            if (downloads.Count > 0) {
-              foreach (var download in downloads) {
-                if (File.Exists(download.FilePath)) {
-                  mainWindowView.DownloadedFiles.Insert(0, download);
+                if (downloads.Count > 0) {
+                    foreach (var download in downloads) {
+                        if (File.Exists(download.FilePath)) {
+                            mainWindowView.DownloadedFiles.Insert(0, download);
+                        }
+                    }
+                    mainWindowView.HasFilesDownloaded = true;
                 }
-              }
-              mainWindowView.HasFilesDownloaded = true;
+            } 
+            else {
+                Console.WriteLine("File does not exist or is empty");
             }
-          }
-          else {
-            Console.WriteLine("File does not exist or is empty");
-          }
 
-          var parsedUrl = mainWindowView.args.First().ParseUrl();
-          if (parsedUrl == null || parsedUrl == "invalid uri") {
-            mainWindowView.Status = FeedbackHelper.InvalidUrl;
-            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-            return;
-          }
+            if (mainWindowView.args.Length > 0) {
+                var parsedUrl = mainWindowView.args.First().ParseUrl();
+                if (parsedUrl == null || parsedUrl == "invalid uri") {
+                    mainWindowView.Status = FeedbackHelper.InvalidUrl;
+                    await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+                    return;
+                }
 
-          var authToken = parsedUrl.ExtractAuthToken();
-          if (authToken == null) {
-            mainWindowView.Status = FeedbackHelper.TokenFail;
-            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-            return;
-          }
+                var authToken = parsedUrl.ExtractAuthToken();
+                if (authToken == null) {
+                    mainWindowView.Status = FeedbackHelper.TokenFail;
+                    await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+                    return;
+                }
 
-          mainWindowView.Url = parsedUrl;
-          await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
+                mainWindowView.Url = parsedUrl;
+                await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
+            }
+        } 
+        catch (Exception ex) {
+            Console.WriteLine($"Exception in Load method: {ex.Message}");
         }
-      }
-      catch (Exception ex) {
-        Console.WriteLine($"Exception in Load method: {ex.Message}");
-      }
     });
     MinimizeWindowOnIdle();
   }
