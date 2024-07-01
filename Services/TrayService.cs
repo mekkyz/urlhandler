@@ -44,7 +44,7 @@ public class TrayService : ITrayService {
     _notifyIcon = new TrayIcon {
       Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
       IsVisible = true,
-      ToolTipText = "Url Handler",
+      ToolTipText = "ChemotionURLHandler",
       Menu = _trayMenu
     };
     // wire up events
