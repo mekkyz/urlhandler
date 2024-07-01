@@ -19,6 +19,7 @@
         Focusable="True">
     <Window.Resources>
       <converters:IndexToBooleanConverter x:Key="indextoBool"/>
+      <converters:DateTimeToStringConverter x:Key="dateToString" />
       <system:Double x:Key="ListHeight">250</system:Double>
 
     </Window.Resources>
@@ -107,15 +108,13 @@
 
                                                     </Border>
                                                     <TextBlock Text="{Binding FileSize}"
-                                                               Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" />
-
+                                                               Grid.Column="1" HorizontalAlignment="Right" 
+                                                               VerticalAlignment="Center" FontWeight="SemiBold" />
                                                     <TextBlock Text="{Binding FileName}" FontWeight="Bold"
-                                                               Grid.Column="0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="1" FontWeight="SemiBold">
-                                                        <Run Text="Location: " />
-                                                        <Run Text="{Binding FilePath}" />
-                                                    </TextBlock>
-                                                    <TextBlock Text="{Binding FileDownloadTimeStamp}"
+                                                               Grid.Column="0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding FilePath}" 
+                                                               Grid.Row="1" />
+                                                    <TextBlock Text="{Binding FileDownloadTimeStamp, Converter={StaticResource dateToString}}"
                                                                Grid.Column="1"
                                                                Grid.Row="1" HorizontalAlignment="Right"
                                                                Margin="20,0,0,0" />
@@ -133,7 +132,7 @@
                                            FontSize="18">
                                   <Run>Nothing to show.. Do something..</Run>
                                   <LineBreak/>
-                                  <Run>Download Chemotion Files Locally!</Run>
+                                  <Run>Open Chemotion Files Locally!</Run>
                                 </TextBlock>
                             </Grid>
                         </ScrollViewer>
