@@ -1,12 +1,15 @@
 
 # URL Handler
+[![License](https://img.shields.io/badge/License-MIT%202.0-blue.svg)](https://opensource.org/licenses/MIT)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)](https://github.com/mekkyz/urlhandler/graphs/commit-activity)
+[![GitHub issues](https://img.shields.io/github/issues/mekkyz/urlhandler.svg)](https://github.com/mekkyz/urlhandler/issues)
+[![GitHub contributors](https://img.shields.io/github/contributors/mekkyz/urlhandler.svg)](https://github.com/mekkyz/urlhandler/graphs/contributors/)
 
-## Overview
-URL Handler is a cross-platform application designed to manage and process URLs specifically tailored for Chemotion interfaces, improving handling and interaction within chemical databases.
+URL Handler is a cross-platform application designed to manage and process Chemotion Files.
 
 ## Key Features
 - **Custom URL Schemes**: Handles specific URL pattern to react with Chemotion.
-- **History Management**: Maintains a history of processed URLs for easy access and management.
+- **History Management**: Maintains a history of processed Files for easy access and management.
 - **File Handling**: Supports downloading, editing and uploading files.
 - **Notifications**: Integrated system tray and app window notifications to alert users about the status of their tasks.
 
@@ -23,8 +26,6 @@ URL Handler is a cross-platform application designed to manage and process URLs 
 To start the application, run after building the project.
 
 `dotnet run`
-
-The application listens for URL events and processes them based on custom schemes associated with Chemotion.
 
 ## Contributing
 
