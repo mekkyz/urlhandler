@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Input;
@@ -36,6 +38,7 @@ public partial class
   internal readonly FileService _fileService;
   internal Process? _fileProcess;
 
+  [ObservableProperty] private string _appVersion = $"{Assembly.GetExecutingAssembly().GetName().Version!.Major}.{Assembly.GetExecutingAssembly().GetName().Version!.Minor}.{Assembly.GetExecutingAssembly().GetName().Version!.Build}";
   [ObservableProperty][NotifyPropertyChangedFor(nameof(HasFilesDownloaded))] ObservableCollection<Downloads> _downloadedFiles = [];
   [ObservableProperty] private ObservableCollection<float> _editedFileIds = [];
   [ObservableProperty] int _selectedDownloadedFileIndex = -1;
@@ -97,8 +100,8 @@ public partial class
             WindowHelper.MainWindowViewModel.EditedFileIds.Add(file.FileId);
           }
 
-          DownloadedFiles[DownloadedFiles.IndexOf(file)].IsEdited = true;
-          DownloadedFiles[DownloadedFiles.IndexOf(file)].FileSize = new FileInfo(file.FilePath).Length.FormatBytes();
+          var downloadedFile = DownloadedFiles[DownloadedFiles.IndexOf(file)];
+          downloadedFile.IsEdited = !downloadedFile.IsKept; downloadedFile.FileSize = new FileInfo(downloadedFile.FilePath).Length.FormatBytes();
         }
         else {
           file.IsEdited = false;
@@ -111,6 +114,28 @@ public partial class
   }
 
   [RelayCommand] public void OnDownloadDoubleTapped(TappedEventArgs e) => OpenFile();
+
+  [RelayCommand]
+  public void OpenDownloadDirectory() {
+    var folderPath = Path.Combine(Path.GetTempPath(), "chemotion");
+
+    if (Directory.Exists(folderPath)) {
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo("explorer.exe", folderPath) {
+          UseShellExecute = true
+        };
+        process.Start();
+      }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo("xdg-open", folderPath) {
+          UseShellExecute = true
+        };
+        process.Start();
+      }
+    }
+  }
 
   [RelayCommand]
   public void OpenFile() {
@@ -127,23 +152,25 @@ public partial class
   public RelayCommand<Task> Process;
   public async Task ProcessCommand() => await ProcessHelper.HandleProcess(this, Url!);
 
-  [RelayCommand] public async Task<bool> UploadFiles() => await new UploadService().UploadEditedFiles();
+  [RelayCommand] public async Task<bool> UploadFiles(string role) => await new UploadService().UploadEditedFiles(role);
 
   [RelayCommand]
   public void DeleteSelectedFile() {
-    if (SelectedDownloadedFileIndex > -1 &&
-        (DownloadedFiles.Count > 0 && DownloadedFiles.Count > SelectedDownloadedFileIndex)) {
-      if (File.Exists(DownloadedFiles[SelectedDownloadedFileIndex].FilePath))
-        File.Delete(DownloadedFiles[SelectedDownloadedFileIndex].FilePath);
-      DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
-      var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
-      Directory.CreateDirectory(appDataPath);
-      var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
-      if (!File.Exists(jsonFilePath) || string.IsNullOrEmpty(File.ReadAllText(jsonFilePath))) return;
+    if (SelectedDownloadedFileIndex < 0 || SelectedDownloadedFileIndex >= DownloadedFiles.Count)
+      return;
+
+    var selectedFile = DownloadedFiles[SelectedDownloadedFileIndex];
+    if (File.Exists(selectedFile.FilePath))
+      File.Delete(selectedFile.FilePath);
+    DownloadedFiles.RemoveAt(SelectedDownloadedFileIndex);
+    var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+    Directory.CreateDirectory(appDataPath);
+    var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
+    if (File.Exists(jsonFilePath) && !string.IsNullOrEmpty(File.ReadAllText(jsonFilePath))) {
       var data = JsonConvert.SerializeObject(DownloadedFiles);
       File.WriteAllText(jsonFilePath, data);
-      HasFilesDownloaded = DownloadedFiles.Count >= 1;
     }
+    HasFilesDownloaded = DownloadedFiles.Count > 0;
   }
 
   partial void OnStatusChanged(string? oldValue, string? newValue) {

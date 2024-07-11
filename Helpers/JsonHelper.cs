@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -24,5 +25,14 @@ public static class JsonHelper {
     }
 
     File.WriteAllText(path, json);
+  }
+
+  public static async void WriteDataToAppData() {
+    var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+      "URL Handler");
+    Directory.CreateDirectory(appDataPath);
+    var jsonFilePath = Path.Combine(appDataPath, "downloads.json");
+    var data = JsonConvert.SerializeObject(WindowHelper.MainWindowViewModel!.DownloadedFiles);
+    await File.WriteAllTextAsync(jsonFilePath, data);
   }
 }

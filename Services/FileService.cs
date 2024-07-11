@@ -11,11 +11,11 @@ using urlhandler.Helpers;
 namespace urlhandler.Services;
 
 internal interface IFileService {
-  Task ProcessFile(string? filePath, MainWindowViewModel mainWindowView);
+  Task ProcessFile(string? filePath, MainWindowViewModel mainWindowView, string originalName);
 }
 
 internal class FileService : IFileService {
-  public Task ProcessFile(string? filePath, MainWindowViewModel mainWindowView) {
+  public Task ProcessFile(string? filePath, MainWindowViewModel mainWindowView, string originalName) {
     try {
       if (filePath == null) return Task.CompletedTask;
       WindowHelper.MainWindowViewModel?._fileProcess?.Dispose();
@@ -43,11 +43,13 @@ internal class FileService : IFileService {
         var download = new Downloads() {
           FileId = id,
           FileName = Path.GetFileName(filePath),
+          OriginalFileName = originalName,
           FilePath = filePath,
           FileSumOnDownload = filePath.FileCheckSum(),
           FileSize = new FileInfo(filePath).Length.FormatBytes(),
           FileDownloadTimeStamp = File.GetLastWriteTime(filePath),
-          IsEdited = false
+          IsEdited = false,
+          Exp = ApiHelper.TokenExp(mainWindowView.Url!)
         };
 
         File.SetCreationTime(filePath, DateTime.Now);
@@ -59,11 +61,13 @@ internal class FileService : IFileService {
         var jsonObject = new {
           FileId = id,
           FileName = Path.GetFileName(filePath),
+          OriginalFileName = originalName,
           FilePath = filePath,
           FileSumOnDownload = filePath.FileCheckSum(),
           FileSize = new FileInfo(filePath).Length.FormatBytes(),
           FileDownloadTimeStamp = File.GetLastWriteTime(filePath),
-          IsEdited = false
+          IsEdited = false,
+          Exp = ApiHelper.TokenExp(mainWindowView.Url!)
         };
 
         JsonHelper.AppendJsonToFile(jsonFilePath, jsonObject);

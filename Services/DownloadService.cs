@@ -11,12 +11,12 @@ using urlhandler.ViewModels;
 namespace urlhandler.Services;
 
 internal interface IDownloadService {
-  Task<string?> DownloadFile(MainWindowViewModel mainWindowView, string token);
+  Task<(string filePath, string originalName)?> DownloadFile(MainWindowViewModel mainWindowView, string token);
 }
 
 internal class DownloadService : IDownloadService {
 
-  public async Task<string?> DownloadFile(MainWindowViewModel mainWindowView, string authToken = "") {
+  public async Task<(string filePath, string originalName)?> DownloadFile(MainWindowViewModel mainWindowView, string authToken) {
     try {
 
       var token = authToken.Length < 1 ? mainWindowView.Url![(mainWindowView.Url!.LastIndexOf('/') + 1)..] : authToken;
@@ -28,11 +28,6 @@ internal class DownloadService : IDownloadService {
       var progress = new Progress<ProgressInfo>(progressInfo => {
         mainWindowView.Status =
           $"Downloaded {progressInfo.BytesRead.FormatBytes()} out of {progressInfo.TotalBytesExpected?.FormatBytes() ?? "0"}.";
-        if (progressInfo.BytesRead >= progressInfo.TotalBytesExpected) {
-          if (mainWindowView._filePath == "Already Exists!") {
-            mainWindowView.Status = FeedbackHelper.AlreadyExists;
-          }
-        }
       });
 
       var (response, fileContentBytes) = await mainWindowView._httpClient.GetWithProgressAsync(downloadUrl, progress);
@@ -51,15 +46,23 @@ internal class DownloadService : IDownloadService {
       }
 
       var fileName = contentDisposition[(contentDisposition.IndexOf("=", StringComparison.Ordinal) + 1)..];
-      var filePath = Path.Combine(Path.GetTempPath(), fileName);
-      var existingDownload = WindowHelper.MainWindowViewModel?.DownloadedFiles.FirstOrDefault(x => x.FilePath == filePath);
-      if (existingDownload != null) {
-        return "Already Exists!";
+      var fileDir = Path.Combine(Path.GetTempPath(), "chemotion");
+      Directory.CreateDirectory(fileDir);
+
+      var filePath = Path.Combine(fileDir, fileName);
+      var originalName = Path.GetFileName(filePath);
+      var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+      var fileExtension = Path.GetExtension(fileName);
+      var counter = 1;
+
+      while (File.Exists(filePath)) {
+        filePath = Path.Combine(fileDir, $"{fileNameWithoutExtension}-{counter}{fileExtension}");
+        counter++;
       }
 
       await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
       await fileStream.WriteAsync(fileContentBytes.AsMemory(0, fileContentBytes.Length));
-      return filePath;
+      return (filePath, originalName);
     }
     catch (Exception ex) {
       var errorMessage = ex is IOException ? FeedbackHelper.FileAccessError : FeedbackHelper.UnExpectedError;

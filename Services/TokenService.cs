@@ -9,6 +9,7 @@ namespace urlhandler.Services;
 
 internal interface ITokenService {
   Task FetchAuthToken(MainWindowViewModel mainWindowView);
+  JwtPayload GetTokenParameters(string token);
 }
 internal class TokenService : ITokenService {
   public async Task FetchAuthToken(MainWindowViewModel mainWindowView) {
@@ -44,7 +45,7 @@ internal class TokenService : ITokenService {
     }
   }
 
-  static JwtPayload GetTokenParameters(string url) {
+  public JwtPayload GetTokenParameters(string url) {
     var handler = new JwtSecurityTokenHandler();
     return handler.ReadToken(url[(url.LastIndexOf('/') + 1)..]) is not JwtSecurityToken jsonToken ? [] : jsonToken.Payload;
   }

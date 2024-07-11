@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace urlhandler.Helpers;
 
 public static class FeedbackHelper {
-  public static string AlreadyExists = "File already exists!";
+  public static string FileKept = "Kept files can not be uploaded!";
   public static string DownloadFail = "Failed to download file";
   public static string DownloadSuccessful = "File downloaded successfully!";
   public static string Downloading = "Downloading File...";
@@ -31,7 +31,7 @@ public static class FeedbackHelper {
 
         var bodyMessages = new Dictionary<string, string>
         {
-                { AlreadyExists, "Same file or same file name already exists." },
+                { FileKept, "Please download file again to edit and upload it." },
                 { DownloadFail, "URL is false or expired. Try again with a different one." },
                 { DownloadSuccessful, "Heroic action! Please continue like that!" },
                 { UploadSuccessful, "Heroic action! Please continue like that!" },

@@ -35,19 +35,15 @@ internal abstract class ProcessHelper {
         if (!string.IsNullOrEmpty(_url) && mainWindowView.Url != _url)
           mainWindowView.Url = _url;
         var token = _url.ExtractAuthToken();
-        mainWindowView._filePath = await mainWindowView._downloadService.DownloadFile(mainWindowView, token!);
+        var downloadedFile = await mainWindowView._downloadService.DownloadFile(mainWindowView, token!);
+        mainWindowView._filePath = downloadedFile?.filePath ?? null;
         if (mainWindowView._filePath == null) {
           mainWindowView.Status = FeedbackHelper.DownloadFail;
           await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
           return;
         }
-        if (mainWindowView._filePath == "Already Exists!") {
-          mainWindowView.Status = FeedbackHelper.AlreadyExists;
-          await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-          return;
-        }
 
-        await mainWindowView._fileService.ProcessFile(mainWindowView._filePath, mainWindowView);
+        await mainWindowView._fileService.ProcessFile(mainWindowView._filePath, mainWindowView, downloadedFile?.originalName ?? "");
         mainWindowView.Status = FeedbackHelper.DownloadSuccessful;
         await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
 

@@ -1,4 +1,6 @@
-﻿namespace urlhandler.Helpers;
+﻿using urlhandler.Services;
+
+namespace urlhandler.Helpers;
 
 static class ApiHelper {
   public static string? apiHost;
@@ -8,4 +10,5 @@ static class ApiHelper {
   public static string DownloadUrl(string token) => $"{apiHost}/{DownloadEndPoint}/{token}";
   public static string UploadUrl(string authToken) => $"{apiHost}/{UploadEndPoint}/{authToken}";
   public static string TokenUrl(string? attId, string? appId) => $"{apiHost}/{TokenEndPoint}?attID={attId}&appId={appId}";
+  public static long TokenExp(string token) => new TokenService().GetTokenParameters(token).Expiration ?? 0;
 }

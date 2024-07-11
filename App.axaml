@@ -3,7 +3,7 @@
              x:Class="urlhandler.App"
              xmlns:local="using:urlhandler"
              xmlns:behaviors="clr-namespace:urlhandler.Behaviors"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
   <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>

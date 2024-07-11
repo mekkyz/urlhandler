@@ -6,33 +6,45 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using urlhandler.Helpers;
 using urlhandler.ViewModels;
-using Uri = System.Uri;
+using System;
 
 namespace urlhandler.Services;
 
 public interface ITrayService {
-  void InitializeTray(MainWindowViewModel viewModel);
+    void InitializeTray(MainWindowViewModel viewModel);
 }
 
 public class TrayService : ITrayService {
-  TrayIcon? _notifyIcon;
-  public void InitializeTray(MainWindowViewModel viewModel) {
-    var _trayMenu = new NativeMenu {
+    private TrayIcon? _notifyIcon;
+    private MainWindowViewModel? _mainWindowViewModel;
+
+    public void InitializeTray(MainWindowViewModel viewModel) {
+        _mainWindowViewModel = viewModel;
+
+        var _trayMenu = new NativeMenu {
             new NativeMenuItem {
-                Header = "Open",
+                Header = "Open app",
                 Command = new RelayCommand(() => {
                     Dispatcher.UIThread.Invoke(() => {
-                        viewModel.mainWindow.WindowState = WindowState.Normal;
-                        viewModel.mainWindow.ShowInTaskbar = true;
+                        _mainWindowViewModel!.mainWindow.WindowState = WindowState.Normal;
+                        _mainWindowViewModel.mainWindow.ShowInTaskbar = true;
                     });
                 })
             },
             new NativeMenuItem {
-                Header = "Upload all edited files",
-                Command = new RelayCommand(UploadFiles)
+                Header = "Upload all & keep locally",
+                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles(""))
             },
             new NativeMenuItem {
-                Header = "Exit",
+                Header = "Upload all & delete locally",
+                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles("delete"))
+            },
+            new NativeMenuItem {
+                Header = "Open files folder",
+                Command = new RelayCommand(() => _mainWindowViewModel!.OpenDownloadDirectory())
+            },
+            new NativeMenuItem {
+                Header = "Exit app",
                 Command = new RelayCommand(() => {
                     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktopApp) {
                         desktopApp.Shutdown();
@@ -41,19 +53,14 @@ public class TrayService : ITrayService {
             }
         };
 
-    _notifyIcon = new TrayIcon {
-      Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
-      IsVisible = true,
-      ToolTipText = "ChemotionURLHandler",
-      Menu = _trayMenu
-    };
-    // wire up events
-    _notifyIcon.Clicked += (sender, e) => WindowHelper.ShowWindow();
-    return;
+        _notifyIcon = new TrayIcon {
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://urlhandler/Assets/icon.ico"))),
+            IsVisible = true,
+            ToolTipText = "ChemotionURLHandler",
+            Menu = _trayMenu
+        };
 
-    async void UploadFiles() {
-      WindowHelper.MainWindowViewModel!.SelectedDownloadedFileIndex = -1;
-      await new UploadService().UploadEditedFiles();
+        // wire up events
+        _notifyIcon.Clicked += (sender, e) => WindowHelper.ShowWindow();
     }
-  }
 }

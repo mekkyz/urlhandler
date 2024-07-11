@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,56 +33,65 @@ public static class WindowHelper {
     new TrayService().InitializeTray(mainWindowView);
     if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 10 ||
         Environment.OSVersion.Platform == PlatformID.Unix) {
-        mainWindowView.notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
+      mainWindowView.notificationManager = Program.NotificationManager ?? throw new InvalidOperationException("Missing notification manager");
     }
 
     Task.Run(async () => {
-        try {
-            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
-            Directory.CreateDirectory(appDataPath);
-            var filePath = Path.Combine(appDataPath, "downloads.json");
-            Console.WriteLine($"Checking for file at path: {filePath}");
+      try {
+        var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "URL Handler");
+        Directory.CreateDirectory(appDataPath);
+        var filePath = Path.Combine(appDataPath, "downloads.json");
+        Console.WriteLine($"Checking for file at path: {filePath}");
 
-            if (File.Exists(filePath) && !string.IsNullOrEmpty(File.ReadAllText(filePath))) {
-                Console.WriteLine("File exists and is not empty");
-                var data = File.ReadAllText(filePath);
-                var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
+        if (File.Exists(filePath) && !string.IsNullOrEmpty(File.ReadAllText(filePath))) {
+          Console.WriteLine("File exists and is not empty");
+          var data = File.ReadAllText(filePath);
+          var downloads = JsonConvert.DeserializeObject<ObservableCollection<Downloads>>(data);
 
-                if (downloads.Count > 0) {
-                    foreach (var download in downloads) {
-                        if (File.Exists(download.FilePath)) {
-                            mainWindowView.DownloadedFiles.Insert(0, download);
-                        }
-                    }
-                    mainWindowView.HasFilesDownloaded = true;
-                }
-            } 
-            else {
-                Console.WriteLine("File does not exist or is empty");
+          if (downloads.Count > 0) {
+            foreach (var download in downloads) {
+              if (File.Exists(download.FilePath)) {
+                if (download.IsKept && download.IsEdited)
+                  download.IsEdited = false;
+                mainWindowView.DownloadedFiles.Insert(0, download);
+              }
             }
 
-            if (mainWindowView.args.Length > 0) {
-                var parsedUrl = mainWindowView.args.First().ParseUrl();
-                if (parsedUrl == null || parsedUrl == "invalid uri") {
-                    mainWindowView.Status = FeedbackHelper.InvalidUrl;
-                    await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-                    return;
-                }
-
-                var authToken = parsedUrl.ExtractAuthToken();
-                if (authToken == null) {
-                    mainWindowView.Status = FeedbackHelper.TokenFail;
-                    await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
-                    return;
-                }
-
-                mainWindowView.Url = parsedUrl;
-                await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
-            }
-        } 
-        catch (Exception ex) {
-            Console.WriteLine($"Exception in Load method: {ex.Message}");
+            var newData = JsonConvert.SerializeObject(mainWindowView.DownloadedFiles.Reverse());
+            File.WriteAllText(filePath, newData);
+            mainWindowView.HasFilesDownloaded = true;
+          }
+          else {
+            mainWindowView.HasFilesDownloaded = false;
+          }
         }
+        else {
+          mainWindowView.HasFilesDownloaded = false;
+          Console.WriteLine("File does not exist or is empty");
+        }
+
+        if (mainWindowView.args.Length > 0) {
+          var parsedUrl = mainWindowView.args.First().ParseUrl();
+          if (parsedUrl == null || parsedUrl == "invalid uri") {
+            mainWindowView.Status = FeedbackHelper.InvalidUrl;
+            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+            return;
+          }
+
+          var authToken = parsedUrl.ExtractAuthToken();
+          if (authToken == null) {
+            mainWindowView.Status = FeedbackHelper.TokenFail;
+            await FeedbackHelper.ShowNotificationAsync(mainWindowView.Status, mainWindowView);
+            return;
+          }
+
+          mainWindowView.Url = parsedUrl;
+          await ProcessHelper.HandleProcess(mainWindowView, parsedUrl);
+        }
+      }
+      catch (Exception ex) {
+        Console.WriteLine($"Exception in Load method: {ex.Message}");
+      }
     });
     MinimizeWindowOnIdle();
   }
