@@ -34,13 +34,13 @@
         <Setter Property="ContextMenu">
           <Setter.Value>
             <ContextMenu>
-              <MenuItem Header="Upload &amp; Delete locally">
+              <MenuItem Header="Upload &amp; delete locally">
                 <Interaction.Behaviors>
                   <behaviors:MenuItemBehavior ViewModel="{Binding $parent[UserControl].DataContext}"
                                               Commands="uploadndelete" />
                 </Interaction.Behaviors>
               </MenuItem>
-              <MenuItem Header="Upload &amp; Keep locally">
+              <MenuItem Header="Upload &amp; keep locally">
                 <Interaction.Behaviors>
                   <behaviors:MenuItemBehavior ViewModel="{Binding $parent[UserControl].DataContext}"
                                               Commands="uploadnkeep" />

@@ -64,16 +64,8 @@
                             BorderThickness="0" i:Attached.Icon="fa-solids fa-upload"
                             HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,10"
                             Width="36" Height="36" FontSize="20"
-                            ToolTip.Tip="Upload edited file(s).">
-                      <Button.Flyout>
-                        <MenuFlyout>
-                          <MenuItem Header="Upload &amp; Delete locally" Command="{Binding UploadFilesCommand}"
-                                    CommandParameter="delete" />
-                          <MenuItem Header="Upload &amp; Keep locally" Command="{Binding UploadFilesCommand}"
-                                    CommandParameter="keep" />
-                        </MenuFlyout>
-                      </Button.Flyout>
-                    </Button>
+                            Command="{Binding UploadFilesCommand}" CommandParameter="delete"
+                            ToolTip.Tip="Upload &amp; delete locally" />
 
                     <Button Background="Transparent" BorderBrush="Transparent"
                             BorderThickness="0" i:Attached.Icon="fa-solid fa-file"
