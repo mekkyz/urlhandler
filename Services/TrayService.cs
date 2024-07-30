@@ -32,12 +32,12 @@ public class TrayService : ITrayService {
                 })
             },
             new NativeMenuItem {
-                Header = "Upload all & keep locally",
-                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles(""))
+                Header = "Upload all edited files & delete locally",
+                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles("delete"))
             },
             new NativeMenuItem {
-                Header = "Upload all & delete locally",
-                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles("delete"))
+                Header = "Upload all edited files & keep locally",
+                Command = new AsyncRelayCommand(async () => await _mainWindowViewModel!.UploadFiles(""))
             },
             new NativeMenuItem {
                 Header = "Open files folder",
