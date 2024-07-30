@@ -1,7 +1,8 @@
 #define public Dependency_Path_NetCoreCheck "dependencies\"
 #include "CodeDependencies.iss"
 
-#define AppName "URL Handler"
+#define AppName "URL-Handler"
+#define AppVersion "1.0.2"
 #define Protocol "chemotion"
 
 [Setup]
@@ -9,14 +10,14 @@ AppId={{A52940A8-3C21-4FE3-8F22-C4AFC690269A}}
 AppName={#AppName}
 AppPublisher=Scientifc Computing Center, KIT
 AppPublisherURL=https://www.scc.kit.edu/
-AppVersion=1.0
+AppVersion={#AppVersion}
 AppComments=Chemotion URL Handler
 AppContact=SDM, SCC, KIT
 AppCopyright=Copyright (C) 2024 KIT Scientific Computing Center (SCC)
 DefaultDirName={commonpf64}\{#AppName}
 DefaultGroupName={#AppName}
 OutputDir=C:/app/build/.
-OutputBaseFilename={#AppName}_1.0
+OutputBaseFilename={#AppName}-{#AppVersion}
 Compression=lzma
 SolidCompression=true
 LicenseFile="C:\Users\kg2527\Desktop\urlhandler\.winbuild\LICENSE.rtf"
@@ -34,7 +35,7 @@ Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763
 Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libHarfBuzzSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libSkiaSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libuv.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\URL Handler.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\URL-Handler.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name:"{group}\{#AppName}"; Filename:"{app}\{#AppName}.exe";WorkingDir:{app}
