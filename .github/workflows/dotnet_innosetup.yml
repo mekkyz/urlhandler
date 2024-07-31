@@ -32,19 +32,17 @@ jobs:
 
     - name: Check commit message for release and version
       id: check_installer
+      shell: pwsh
       run: |
-        commit_message=$(git log -1 --pretty=%B)
-        echo "Commit message: $commit_message"
-        if [[ "$commit_message" == *"[Release]"* ]]; then
-          echo "::set-output name=create::true"
-        else
-          echo "::set-output name=create::false"
-        fi
-        version=$(echo "$commit_message" | sed -n 's/.*\[version:\(.*\)\].*/\1/p')
-        if [ -z "$version" ]; then
-          version="0.0.0"
-        fi
-        echo "::set-output name=version::$version"
+        $commit_message = (git log -1 --pretty=%B)
+        Write-Output "Commit message: $commit_message"
+        if ($commit_message -match "\[Release\]") {
+          Write-Output "::set-output name=create::true"
+        } else {
+          Write-Output "::set-output name=create::false"
+        }
+        $version = if ($commit_message -match "\[version:(.*?)\]") { $matches[1] } else { "0.0.0" }
+        Write-Output "::set-output name=version::$version"
 
     - name: Update version in csproj
       if: steps.check_installer.outputs.create == 'true'
