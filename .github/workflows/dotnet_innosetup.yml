@@ -43,7 +43,7 @@ jobs:
         if ($commit_message -match "\[Release\]") {
           echo "create=true" >> $GITHUB_ENV
         } else {
-          echo "create=false" >> $GITHUB_ENV
+          echo "create=true" >> $GITHUB_ENV
         }
         if ($commit_message -match "\[version:(.*?)\]") {
           $version = $matches[1]
