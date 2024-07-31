@@ -1,4 +1,4 @@
-name: .NET and Installer
+name: .NET
 
 on:
   push:
