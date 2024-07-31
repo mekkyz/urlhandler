@@ -32,14 +32,7 @@ jobs:
 
     - name: Set commit message
       id: set_commit_message
-      run: |
-        if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
-          echo "commit_message=${{ github.event.inputs.commit_message }}" >> $GITHUB_ENV
-        } else {
-          echo "commit_message=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
-        }
-        echo "commit_message=${{ env.commit_message }}"
-      shell: pwsh
+      run: echo "commit_message=${{ github.event.inputs.commit_message || (github.event.head_commit.message || 'Test release') }}" >> $GITHUB_ENV
 
     - name: Check commit message for release and version
       id: check_installer
@@ -52,7 +45,11 @@ jobs:
         } else {
           echo "create=false" >> $GITHUB_ENV
         }
-        $version = if ($commit_message -match "\[version:(.*?)\]") { $matches[1] } else { "0.0.0" }
+        if ($commit_message -match "\[version:(.*?)\]") {
+          $version = $matches[1]
+        } else {
+          $version = "0.0.0"
+        }
         echo "version=$version" >> $GITHUB_ENV
 
     - name: Update version in csproj
