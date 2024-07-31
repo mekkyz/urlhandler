@@ -127,7 +127,7 @@
             <TextBlock Text="{Binding FilePath}"
                        ToolTip.Tip="{Binding FilePath}"
                        Grid.Row="1" Grid.Column="0"
-                       TextTrimming="WordEllipsis" />
+                       TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding FileDownloadTimeStamp, Converter={StaticResource DateToString}}"
                        Grid.Column="1"
                        Grid.Row="1"
