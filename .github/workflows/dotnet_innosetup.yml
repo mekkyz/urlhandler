@@ -30,15 +30,15 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
-    - name: Set commit message
-      id: set_commit_message
-      run: echo "commit_message=${{ github.event.inputs.commit_message || (github.event.head_commit.message || 'Test release') }}" >> $GITHUB_ENV
-
     - name: Check commit message for release and version
       id: check_installer
       shell: pwsh
       run: |
-        $commit_message = "${{ env.commit_message }}"
+        if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+          $commit_message = "${{ github.event.inputs.commit_message }}"
+        } else {
+          $commit_message = "${{ github.event.head_commit.message }}"
+        }
         Write-Output "Commit message: $commit_message"
         if ($commit_message -match "\[Release\]") {
           echo "create=true" >> $GITHUB_ENV
