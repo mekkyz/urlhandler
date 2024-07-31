@@ -1,16 +1,12 @@
 name: .NET and Installer
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
     inputs:
-      commit_message:
-        description: 'Commit message for testing release'
+      version:
+        description: 'Version number for release'
         required: true
-        default: 'Test release'
+        default: '0.0.0'
 
 jobs:
   build:
@@ -30,90 +26,59 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
-    - name: Check commit message for release and version
-      id: check_installer
-      shell: pwsh
-      run: |
-        if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
-          $commit_message = "${{ github.event.inputs.commit_message }}"
-        } else {
-          $commit_message = "${{ github.event.head_commit.message }}"
-        }
-        Write-Output "Commit message: $commit_message"
-        if ($commit_message -match "\[Release\]") {
-          echo "create=true" >> $GITHUB_ENV
-        } else {
-          echo "create=true" >> $GITHUB_ENV
-        }
-        if ($commit_message -match "\[version:(.*?)\]") {
-          $version = $matches[1]
-        } else {
-          $version = "0.0.0"
-        }
-        echo "version=$version" >> $GITHUB_ENV
-
     - name: Update version in csproj
-      if: env.create == 'true'
       run: |
-        sed -i 's#<Version>.*</Version>#<Version>${{ env.version }}</Version>#' *.csproj
+        sed -i 's#<Version>.*</Version>#<Version>${{ github.event.inputs.version }}</Version>#' *.csproj
 
     - name: Update version in iss file
-      if: env.create == 'true'
       run: |
-        sed -i 's/#define AppVersion ".*"/#define AppVersion "${{ env.version }}"/' .winbuild/urlhandler.iss
+        sed -i 's/#define AppVersion ".*"/#define AppVersion "${{ github.event.inputs.version }}"/' .winbuild/urlhandler.iss
 
     - name: Commit version updates
-      if: env.create == 'true'
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add *.csproj .winbuild/urlhandler.iss
-        git commit -m "Update version to ${{ env.version }}"
+        git commit -m "Update version to ${{ github.event.inputs.version }}"
 
     - name: Push version updates
-      if: env.create == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: git push origin HEAD:main
 
     - name: Publish project
-      if: env.create == 'true'
       run: |
         dotnet publish -p:PublishSingleFile=true --self-contained false
         ren "bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\urlhandler.exe" "URL-Handler.exe"
 
     - name: Build Installer
-      if: env.create == 'true'
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
       with:
         path: .winbuild/urlhandler.iss
 
     - name: Create GitHub Release
-      if: env.create == 'true'
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ env.version }}
-        release_name: Release ${{ env.version }}
+        tag_name: v${{ github.event.inputs.version }}
+        release_name: Release ${{ github.event.inputs.version }}
         draft: false
         prerelease: false
 
     - name: Upload Release Asset
-      if: env.create == 'true'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: C:/app/build/URL-Handler-${{ env.version }}.exe
-        asset_name: URL-Handler-Setup-${{ env.version }}.exe
+        asset_path: C:/app/build/URL-Handler-${{ github.event.inputs.version }}.exe
+        asset_name: URL-Handler-Setup-${{ github.event.inputs.version }}.exe
         asset_content_type: application/octet-stream
 
     - name: Upload Artifact
-      if: env.create == 'true'
       uses: actions/upload-artifact@v2
       with:
         name: Setup
-        path: C:/app/build/URL-Handler-${{ env.version }}.exe
+        path: C:/app/build/URL-Handler-${{ github.event.inputs.version }}.exe
