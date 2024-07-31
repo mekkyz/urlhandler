@@ -1,0 +1,114 @@
+name: .NET and Installer
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.6"
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+      
+    # if Release
+    - name: Check commit message for installer keyword and version
+      id: check_installer
+      run: |
+        echo "commit_message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+        if [[ "${{ env.commit_message }}" == *"[Release]"* ]]; then
+          echo "##[set-output name=create;]true"
+        else
+          echo "##[set-output name=create;]false"
+        fi
+        version=$(echo "${{ env.commit_message }}" | grep -oP '(?<=\[version:).+?(?=\])')
+        if [ -z "$version" ]; then
+          version="0.0.0"
+        fi
+        echo "##[set-output name=version;]$version"
+      shell: bash
+
+    - name: Update version in csproj
+      if: steps.check_installer.outputs.create == 'true'
+      run: |
+        sed -i 's#<Version>.*</Version>#<Version>${{ steps.check_installer.outputs.version }}</Version>#' *.csproj
+      shell: bash
+
+    - name: Update version in iss file
+      if: steps.check_installer.outputs.create == 'true'
+      run: |
+        sed -i 's/#define AppVersion ".*"/#define AppVersion "${{ steps.check_installer.outputs.version }}"/' .winbuild/urlhandler.iss
+      shell: bash
+
+    - name: Commit version updates
+      if: steps.check_installer.outputs.create == 'true'
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add *.csproj .winbuild/urlhandler.iss
+        git commit -m "Update version to ${{ steps.check_installer.outputs.version }}"
+      shell: bash
+
+    - name: Push version updates
+      if: steps.check_installer.outputs.create == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git push origin HEAD:main
+      shell: bash
+
+    - name: Publish project
+      if: steps.check_installer.outputs.create == 'true'
+      run: |
+        dotnet publish -c Release -p:PublishSingleFile=true -p:AssemblyName=urlhandler
+        ren "bin\Release\net8.0\publish\urlhandler.exe" "URL-Handler.exe"
+      shell: cmd
+
+    - name: Build Installer
+      if: steps.check_installer.outputs.create == 'true'
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      with:
+        path: .winbuild/urlhandler.iss
+
+    - name: Create GitHub Release
+      if: steps.check_installer.outputs.create == 'true'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.check_installer.outputs.version }}
+        release_name: Release ${{ steps.check_installer.outputs.version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      if: steps.check_installer.outputs.create == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: C:/app/build/URL-Handler-${{ steps.check_installer.outputs.version }}.exe
+        asset_name: URL-Handler-Setup-${{ steps.check_installer.outputs.version }}.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Artifact
+      if: steps.check_installer.outputs.create == 'true'
+      uses: actions/upload-artifact@v2
+      with:
+        name: Setup
+        path: C:/app/build/URL-Handler-${{ steps.check_installer.outputs.version }}.exe
