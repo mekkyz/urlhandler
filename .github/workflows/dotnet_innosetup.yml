@@ -33,7 +33,7 @@ jobs:
     - name: Set commit message
       id: set_commit_message
       run: |
-        if (Test-Path env:GITHUB_EVENT_NAME -and $env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+        if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
           echo "commit_message=${{ github.event.inputs.commit_message }}" >> $GITHUB_ENV
         } else {
           echo "commit_message=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
