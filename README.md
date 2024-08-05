@@ -4,6 +4,8 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-blue.svg)](https://github.com/mekkyz/urlhandler/graphs/commit-activity)
 [![GitHub issues](https://img.shields.io/github/issues/mekkyz/urlhandler.svg)](https://github.com/mekkyz/urlhandler/issues)
 [![GitHub contributors](https://img.shields.io/github/contributors/mekkyz/urlhandler.svg)](https://github.com/mekkyz/urlhandler/graphs/contributors/)
+[![Continuous Integration](https://github.com/mekkyz/urlhandler/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mekkyz/urlhandler/actions/workflows/dotnet.yml)
+[![Latest Release](https://github.com/mekkyz/urlhandler/actions/workflows/dotnet_innosetup.yml/badge.svg)](https://github.com/mekkyz/urlhandler/actions/workflows/dotnet_innosetup.yml)
 
 URL Handler is a cross-platform application designed to manage and process Chemotion Files.
 

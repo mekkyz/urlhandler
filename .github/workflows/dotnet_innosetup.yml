@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for release'
+        required: true
+        default: '0.0.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.*"
+
+    - name: Update version in csproj
+      run: |
+        sed -i 's#<Version>.*</Version>#<Version>${{ github.event.inputs.version }}</Version>#' *.csproj
+
+    - name: Update version in iss file
+      run: |
+        sed -i 's/#define AppVersion ".*"/#define AppVersion "${{ github.event.inputs.version }}"/' .winbuild/urlhandler.iss
+        
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Publish project
+      run: |
+        dotnet publish -p:PublishSingleFile=true --self-contained false
+        ren "bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\urlhandler.exe" "URL-Handler.exe"
+
+    - name: Build Installer
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      with:
+        path: .winbuild/urlhandler.iss
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        release_name: URL Handler ${{ github.event.inputs.version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: C:/app/build/URL-Handler-${{ github.event.inputs.version }}.exe
+        asset_name: URL-Handler-Setup-${{ github.event.inputs.version }}.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Setup
+        path: C:/app/build/URL-Handler-${{ github.event.inputs.version }}.exe

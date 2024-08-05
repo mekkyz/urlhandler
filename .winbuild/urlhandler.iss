@@ -11,7 +11,7 @@ AppName={#AppName}
 AppPublisher=Scientifc Computing Center, KIT
 AppPublisherURL=https://www.scc.kit.edu/
 AppVersion={#AppVersion}
-AppComments=Chemotion URL Handler
+AppComments=Chemotion-URL-Handler
 AppContact=SDM, SCC, KIT
 AppCopyright=Copyright (C) 2024 KIT Scientific Computing Center (SCC)
 DefaultDirName={commonpf64}\{#AppName}
@@ -20,10 +20,10 @@ OutputDir=C:/app/build/.
 OutputBaseFilename={#AppName}-{#AppVersion}
 Compression=lzma
 SolidCompression=true
-LicenseFile="C:\Users\kg2527\Desktop\urlhandler\.winbuild\LICENSE.rtf"
-SetupIconFile="C:\Users\kg2527\Desktop\urlhandler\Assets\icon.ico"
+LicenseFile="LICENSE.rtf"
+SetupIconFile="..\Assets\icon.ico"
 WizardStyle=modern
-UninstallDisplayIcon="C:\Users\kg2527\Desktop\urlhandler\Assets\icon.ico"
+UninstallDisplayIcon="..\Assets\icon.ico"
 UninstallDisplayName={#AppName}
 
 [Languages]
@@ -31,11 +31,11 @@ Name: en; MessagesFile: "compiler:Default.isl"
 //Name: de; MessagesFile: "compiler:Languages\German.isl"
 
 [Files]
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\av_libglesv2.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libHarfBuzzSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libSkiaSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libuv.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\kg2527\Desktop\urlhandler\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\URL-Handler.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\av_libglesv2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libHarfBuzzSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libSkiaSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\libuv.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\Release\net8.0-windows10.0.17763.0\win-x64\publish\URL-Handler.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name:"{group}\{#AppName}"; Filename:"{app}\{#AppName}.exe";WorkingDir:{app}
