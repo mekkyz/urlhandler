@@ -30,8 +30,8 @@ public class App : Application {
 
   private void DesktopOnStartup(object? sender, ControlledApplicationLifetimeStartupEventArgs e) {
     var currentProcess = Process.GetCurrentProcess();
-    if (Process.GetProcessesByName("URL Handler").Length > 0) {
-      var processes = Process.GetProcessesByName("URL Handler");
+    if (Process.GetProcessesByName("URL-Handler").Length > 0) {
+      var processes = Process.GetProcessesByName("URL-Handler");
       foreach (Process process in processes) {
         if (process.Id != currentProcess.Id) {
           try {
